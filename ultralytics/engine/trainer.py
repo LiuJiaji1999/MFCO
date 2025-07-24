@@ -131,6 +131,7 @@ class BaseTrainer:
         # Model and Dataset
         self.model = check_model_file_from_stem(self.args.model)  # add suffix, i.e. yolov8n -> yolov8n.pt
         with torch_distributed_zero_first(LOCAL_RANK):  # avoid auto-downloading dataset multiple times
+            print('一. trainer.py/get_dataset 先从yaml文件获取 train')
             self.trainset, self.testset = self.get_dataset()
         self.ema = None
 
@@ -289,6 +290,7 @@ class BaseTrainer:
 
         # Dataloaders
         batch_size = self.batch_size // max(world_size, 1)
+        print('二.trainer.py/get_dataloader 开始加载训练数据')
         self.train_loader = self.get_dataloader(self.trainset, batch_size=batch_size, rank=LOCAL_RANK, mode="train")
         if RANK in {-1, 0}:
             # Note: When training DOTA dataset, double batch size could get OOM on images with >2000 objects.
@@ -365,7 +367,7 @@ class BaseTrainer:
                 LOGGER.info(self.progress_string())
                 pbar = TQDM(enumerate(self.train_loader), total=nb)
             self.tloss = None
-            for i, batch in pbar:
+            for i, batch in pbar: # 等同于batch_size 大小
                 self.run_callbacks("on_train_batch_start")
                 # Warmup
                 ni = i + nb * epoch
@@ -386,7 +388,8 @@ class BaseTrainer:
                 
                 # Forward
                 with autocast(self.amp):
-                    batch = self.preprocess_batch(batch)
+                    # print('开始处理 batch len(batch)=7 含im_file/ori_shape/resized_shape/img/cls/bboxes/batch_idx')
+                    batch = self.preprocess_batch(batch) # normalize img 
                     self.loss, self.loss_items = self.model(batch)
                     if RANK != -1:
                         self.loss *= world_size
