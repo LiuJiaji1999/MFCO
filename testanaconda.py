@@ -12,3 +12,7 @@ try:
     print("einops 路径:", einops.__file__)
 except ImportError:
     print("没有安装 einops")
+
+
+# import tkinter as tk
+# tk.Tk().mainloop()

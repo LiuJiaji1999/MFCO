@@ -7,7 +7,7 @@ from ultralytics import YOLO
 if __name__ == '__main__':
     model = YOLO('ultralytics/cfg/models/11/yolo11n.yaml') # YOLO11
     # model.load('yolo11n.pt') # loading pretrain weights
-    model.train(data='/home/lenovo/data/liujiaji/ultralytics-yolo11-main/dataset/powerdata.yaml',
+    model.train(data='/home/lenovo/data/liujiaji/ultralytics-yolo11-main/dataset/VisDrone.yaml',
                 cache=False,
                 imgsz=640,
                 epochs=10,

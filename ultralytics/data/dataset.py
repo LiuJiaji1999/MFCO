@@ -13,7 +13,7 @@ from PIL import Image
 from torch.utils.data import ConcatDataset
 
 from ultralytics.utils import LOCAL_RANK, NUM_THREADS, TQDM, colorstr
-from ultralytics.utils.ops import resample_segments
+from ultralytics.utils.ops import resample_segments,xywhn2xyxy
 from ultralytics.utils.torch_utils import TORCHVISION_0_18
 
 from .augment import (
@@ -40,6 +40,8 @@ from .utils import (
 
 # Ultralytics dataset *.cache version, >= 1.0.0 for YOLOv8
 DATASET_CACHE_VERSION = "1.0.3"
+
+# import albumentations as A
 
 
 class YOLODataset(BaseDataset):
@@ -170,6 +172,7 @@ class YOLODataset(BaseDataset):
         if len_cls == 0:
             LOGGER.warning(f"WARNING ⚠️ No labels found in {cache_path}, training may not work correctly. {HELP_URL}")
         return labels
+    
 
     def build_transforms(self, hyp=None):
         """Builds and appends transforms to the list."""
@@ -194,6 +197,71 @@ class YOLODataset(BaseDataset):
             )
         )
         return transforms
+
+    # def build_transforms(self, hyp=None):
+    #     """构建用于多视角增强的 transform pipeline。"""
+    #     print("五.1 多视角 YOLO dataset 构建数据增强 transforms")
+
+    #     # 关闭跨图增强
+    #     hyp.mosaic = 0.0
+    #     hyp.mixup = 0.0
+    #     hyp.copy_paste = 0.0
+
+    #     resize = LetterBox(new_shape=(self.imgsz, self.imgsz), scaleup=self.augment)
+    #     normalize = A.Normalize(mean=(0.485, 0.456, 0.406),
+    #                             std=(0.229, 0.224, 0.225))
+
+    #     formatter = Format(
+    #         bbox_format="xywh",
+    #         normalize=True,
+    #         return_mask=self.use_segments,
+    #         return_keypoint=self.use_keypoints,
+    #         return_obb=self.use_obb,
+    #         batch_idx=True,
+    #         mask_ratio=hyp.mask_ratio,
+    #         mask_overlap=hyp.overlap_mask,
+    #         bgr=hyp.bgr if self.augment else 0.0,
+    #     )
+
+    #     def multiview_transform(sample):
+    #         image, label = sample
+
+    #         # 多视角构造
+    #         img_o = image.copy()
+    #         img_a1 = cv2.flip(img_o, 0)
+    #         img_a2 = cv2.flip(img_o, -1)
+    #         img_c1 = cv2.resize(img_o, None, fx=2.0, fy=2.0, interpolation=cv2.INTER_LINEAR)
+    #         img_c2 = cv2.resize(img_o, None, fx=1.8, fy=1.8, interpolation=cv2.INTER_LINEAR)
+
+    #         views = {
+    #             "image_o": img_o,
+    #             "image_a1": img_a1,
+    #             "image_a2": img_a2,
+    #             "image_c1": img_c1,
+    #             "image_c2": img_c2
+    #         }
+
+    #         transformed_views = {}
+    #         for k, img in views.items():
+    #             img = resize(image=img)
+    #             img = normalize(image=img)["image"]
+    #             img = torch.from_numpy(img).permute(2, 0, 1).float()
+    #             transformed_views[k] = img
+
+    #         # 格式化标签
+    #         label = formatter(label)
+
+    #         return {**transformed_views, **label}
+
+    #     return multiview_transform
+    
+    # def multiview_collate_fn(batch):
+    #     keys = ["image_o", "image_a1", "image_a2", "image_c1", "image_c2"]
+    #     collated = {k: torch.stack([item[k] for item in batch]) for k in keys}
+    #     collated["bboxes"] = torch.cat([item["bboxes"] for item in batch], 0)
+    #     collated["cls"] = torch.cat([item["cls"] for item in batch], 0)
+    #     collated["batch_idx"] = torch.cat([item["batch_idx"] for item in batch], 0)
+    #     return collated
 
     def close_mosaic(self, hyp):
         """Sets mosaic, copy_paste and mixup options to 0.0 and builds transformations."""
