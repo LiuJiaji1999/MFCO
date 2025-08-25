@@ -177,6 +177,8 @@ class YOLODataset(BaseDataset):
     def build_transforms(self, hyp=None):
         """Builds and appends transforms to the list."""
         print('五. dataset.py/build_transforms 开始数据增强')
+        self.augment = False
+        print(self.augment)
         if self.augment:
             hyp.mosaic = hyp.mosaic if self.augment and not self.rect else 0.0
             hyp.mixup = hyp.mixup if self.augment and not self.rect else 0.0
@@ -196,7 +198,7 @@ class YOLODataset(BaseDataset):
                 bgr=hyp.bgr if self.augment else 0.0,  # only affect training.
             )
         )
-        return transforms
+        return transforms #list,len=7
 
     # def build_transforms(self, hyp=None):
     #     """构建用于多视角增强的 transform pipeline。"""

@@ -26,3 +26,11 @@ print('二. trainer.py/get_dataloader 开始加载训练数据')
 print('三. detect/train.py/build_dataset 开始真正构建数据集')
 print('四. bulid.py/build_yolo_dataset 构建YOLO数据集')
 print('五. dataset.py/build_transforms 开始数据增强')
+print('六. augment.py/v8_transforms 开始执行数据增强函数，')
+    看下增强后的batch到哪里了,
+    随机增强方式直接替换原图送进模型。
+print('七.ultralytics/data/base.py/get_image_and_label，数据增强后的图片-标签对应'）
+
+
+
+

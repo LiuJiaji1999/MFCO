@@ -56,6 +56,8 @@ from ultralytics.utils.torch_utils import (
 )
 from ultralytics.nn.extra_modules.kernel_warehouse import get_temperature
 
+from ultralytics.data.multiview import generate_multiview_batch
+
 class BaseTrainer:
     """
     A base class for creating trainers.
@@ -388,9 +390,19 @@ class BaseTrainer:
                 
                 # Forward
                 with autocast(self.amp):
-                    # print('开始处理 batch len(batch)=7 含im_file/ori_shape/resized_shape/img/cls/bboxes/batch_idx')
+                    # print('开始处理 batch len(batch)=7 含im_file=1/ori_shape=1/resized_shape=1/img=1/cls=35/bboxes=35/batch_idx=35')
                     batch = self.preprocess_batch(batch) # normalize img 
+                    
+                    ## 在这里实现 1个batch含原视角的多变换
+                    # 全局视角-原始图像 original、远距视图 far、近距视图 near
+                    # 局部视角-倾斜视图 shear transformation、投影视图 affine transformation、色彩扰动 color jittering
+                    # 多视角增强（batch_size=1时扩展成多个视角输入）
+                    if batch["img"].shape[0] == 1:  
+                        batch = generate_multiview_batch(batch)
+
+
                     self.loss, self.loss_items = self.model(batch)
+
                     if RANK != -1:
                         self.loss *= world_size
                     self.tloss = (
