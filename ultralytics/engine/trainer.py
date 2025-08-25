@@ -398,7 +398,7 @@ class BaseTrainer:
                     # 局部视角-倾斜视图 shear transformation、投影视图 affine transformation、色彩扰动 color jittering
                     # 多视角增强（batch_size=1时扩展成多个视角输入）
                     if batch["img"].shape[0] == 1:  
-                        batch = generate_multiview_batch(batch)
+                        batch = generate_multiview_batch(batch,visualize=True)
 
 
                     self.loss, self.loss_items = self.model(batch)
