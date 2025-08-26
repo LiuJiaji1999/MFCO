@@ -392,16 +392,32 @@ class BaseTrainer:
                 with autocast(self.amp):
                     # print('开始处理 batch len(batch)=7 含im_file=1/ori_shape=1/resized_shape=1/img=1/cls=35/bboxes=35/batch_idx=35')
                     batch = self.preprocess_batch(batch) # normalize img 
+                    '''
+                    len(batch['im_file'])= 1
+                    len(batch['ori_shape']) = 1
+                    len(batch['resized_shape']) = 1
+                    batch['img'].shape = torch.Size([1, 3, 640, 640])
+                    batch['cls'].shape = torch.Size([35, 1])
+                    batch['bboxes'].shape = torch.Size([35, 4])
+                    batch['batch_idx'].shape = torch.Size([35])
+                    '''
                     
-                    ## 在这里实现 1个batch含原视角的多变换
-                    # 全局视角-原始图像 original、远距视图 far、近距视图 near
-                    # 局部视角-倾斜视图 shear transformation、投影视图 affine transformation、色彩扰动 color jittering
-                    # 多视角增强（batch_size=1时扩展成多个视角输入）
-                    if batch["img"].shape[0] == 1:  
-                        batch = generate_multiview_batch(batch,visualize=True)
+                    # 多视角增强
+                    batch_v = generate_multiview_batch(batch,visualize=False)
 
+                    # 全局一致性
+                    
 
-                    self.loss, self.loss_items = self.model(batch)
+                    # 局部互补性
+
+                    self.loss, self.loss_items = self.model(batch_v)
+                    
+
+                    # self.loss = self.oloss 
+                    # self.loss_items = torch.cat([
+                    #     self.oloss_items,  # 原有的 cls、bbox、dfl 损失
+                        
+                    # ])
 
                     if RANK != -1:
                         self.loss *= world_size
@@ -458,7 +474,7 @@ class BaseTrainer:
                         self.metrics, self.fitness = self.validate()
                     except Exception as e:
                         print(e)
-                        raise Exception('这阶段报错一般是没按配置文件.md要求修改，先看配置文件.md看看有没有要求修改什么，没的话按照配置文件.md最下方第五点修改，不行再在群里反馈')
+                        raise Exception('这阶段报错一般是没按配置文件.md要求修改，先看配置文件.md看看有没有要求修改什么，没的话按照配置文件.md最下方第五点修改')
                 self.save_metrics(metrics={**self.label_loss_items(self.tloss), **self.metrics, **self.lr})
                 self.stop |= self.stopper(epoch + 1, self.fitness) or final_epoch
                 if self.args.time:

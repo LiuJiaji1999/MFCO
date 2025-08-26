@@ -5,9 +5,11 @@ import torch
 import os
 
 # 定义多视角增强流水线
+# 全局视角-原始图像 original、远距视图 far、近距视图 near
+# 局部视角-倾斜视图 shear transformation、投影视图 affine transformation、色彩扰动 color jittering
 multi_view_transforms = {
     "far": A.Compose([
-        A.Resize(320, 320, always_apply=True),  # 模拟远距（缩小目标）
+        A.Resize(320, 320, always_apply=True, interpolation=cv2.INTER_LANCZOS4),  # 模拟远距（缩小目标）
         A.Resize(640, 640, always_apply=True)  # 保证统一大小
     ], bbox_params=A.BboxParams(format='yolo', label_fields=['class_labels'])),
 
@@ -33,122 +35,123 @@ multi_view_transforms = {
 }
 
 
-# def generate_multiview_batch(batch):
-#     """
-#     输入: batch (YOLOv8的batch字典，含 img/bboxes/cls 等)
-#     输出: 扩展后的 batch，包含多视角版本
-#     """
-#     # 原图 img 已经在 cuda 上，保留 device  
-#     device = batch["img"].device 
+EPS = 1e-6
 
-#     imgs, bboxes, labels, im_files = [], [], [], []
-#     # 取原始数据
-#     img = (batch["img"][0].permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)  # CHW -> HWC
-#     h, w = img.shape[:2]
-#     orig_bboxes = batch["bboxes"].cpu().numpy()  # yolo 格式 [x, y, w, h]
-#     orig_labels = batch["cls"].cpu().numpy().astype(int).tolist()
+def sanitize_yolo_bboxes(bboxes: np.ndarray, eps: float = EPS) -> np.ndarray:
+    """
+    将 YOLO 格式 (cx, cy, w, h) 的 bbox 转为安全范围，保证转换前后
+    x_min/x_max/y_min/y_max 在 [eps, 1-eps]，并返回新的 (cx,cy,w,h)。
+    bboxes: shape (N,4)，若 N==0 返回 shape (0,4)
+    """
+    if bboxes is None or len(bboxes) == 0:
+        return np.zeros((0, 4), dtype=np.float32)
+    b = np.array(bboxes, dtype=np.float32).reshape(-1, 4)
+    cx, cy, w, h = b[:, 0], b[:, 1], b[:, 2], b[:, 3]
+    x_min, y_min = cx - w / 2, cy - h / 2
+    x_max, y_max = cx + w / 2, cy + h / 2
 
-#     # 原始图
-#     imgs.append(batch["img"][0])
-#     bboxes.append(orig_bboxes)
-#     labels.append(orig_labels)
-#     im_files.append(batch["im_file"][0])
+    # clip
+    x_min = np.clip(x_min, eps, 1.0 - eps)
+    y_min = np.clip(y_min, eps, 1.0 - eps)
+    x_max = np.clip(x_max, eps, 1.0 - eps)
+    y_max = np.clip(y_max, eps, 1.0 - eps)
 
-#     # 多视角增强
-#     for view_name, aug in multi_view_transforms.items():
-#         transformed = aug(image=img, bboxes=orig_bboxes, class_labels=orig_labels)
+    new_w = np.maximum(x_max - x_min, eps)
+    new_h = np.maximum(y_max - y_min, eps)
+    new_cx = (x_min + x_max) / 2
+    new_cy = (y_min + y_max) / 2
 
-#         t_img = transformed["image"]
-#         t_bboxes = transformed["bboxes"]
-#         t_labels = transformed["class_labels"]
-
-#         # 转回 torch (HWC -> CHW)
-#         t_img = torch.from_numpy(t_img).permute(2, 0, 1).float() / 255.0
-#         t_img = t_img.to(device)   # ⚡只把 image 放到和原图相同的 device
-
-#         imgs.append(t_img)
-#         bboxes.append(np.array(t_bboxes)) # ⚡保持 CPU numpy
-#         labels.append(t_labels)
-#         im_files.append(f"{batch['im_file'][0]}_{view_name}")
-
-#     # 拼接成新的 batch
-#     batch["img"] = torch.stack(imgs, dim=0)  # 所有 img 在 cuda
-#     batch["bboxes"] = [torch.tensor(b, dtype=torch.float32) for b in bboxes] # 保持在 CPU
-#     batch["cls"] = [torch.tensor(l, dtype=torch.int64) for l in labels] # 保持在 CPU
-#     batch["im_file"] = im_files
-
-#     return batch
+    return np.stack([new_cx, new_cy, new_w, new_h], axis=1)
 
 
 def generate_multiview_batch(batch, visualize=False, save_dir="/home/lenovo/data/liujiaji/powerGit/mvod/image/debug_multiview"):
     """
-    输入: batch (YOLOv8的batch字典，含 img/bboxes/cls 等)
-    输出: 扩展后的 batch，包含多视角版本
+    输入: YOLOv8 batch (B=1 的 dict)
+    输出: 多视角增强后的 batch，保持原始格式一致
+           img:[B*V, C, H, W], cls:[N_total,1], bboxes:[N_total,4], batch_idx:[N_total]
     """
-    device = batch["img"].device 
+    device = batch["img"].device
+    
+    imgs = []
+    bboxes_all = []
+    cls_all = []
+    batch_idx_all = []
 
-    imgs, bboxes, labels, im_files = [], [], [], []
-    # 原始数据
-    img = (batch["img"][0].permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)  # CHW -> HWC
-    orig_bboxes = batch["bboxes"].cpu().numpy()  # yolo 格式 [x, y, w, h]
-    orig_labels = batch["cls"].cpu().numpy().astype(int).tolist()
+    im_files = []
+    ori_shapes = []
+    resized_shapes = []
 
-    # 原始图
-    imgs.append(batch["img"][0])
-    bboxes.append(orig_bboxes)
-    labels.append(orig_labels)
-    im_files.append(batch["im_file"][0])
+    # -------------------
+    # 遍历 batch 内每张图像
+    # -------------------
+    B = batch["img"].shape[0]
+    for b in range(B):
+        img = (batch["img"][b].permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)
+        bboxes = batch["bboxes"][batch["batch_idx"] == b].cpu().numpy()
+        labels = batch["cls"][batch["batch_idx"] == b].cpu().numpy().astype(int).reshape(-1)
 
-    # 收集所有视角结果（用于可视化/保存）
-    vis_results = [("original", img, orig_bboxes, orig_labels)]
+        bboxes = sanitize_yolo_bboxes(bboxes)
 
-    # 多视角增强
-    for view_name, aug in multi_view_transforms.items():
-        transformed = aug(image=img, bboxes=orig_bboxes, class_labels=orig_labels)
+        # 原始图也作为一个视角
+        views = [("original", img, bboxes, labels)]
 
-        t_img = transformed["image"]
-        t_bboxes = transformed["bboxes"]
-        t_labels = transformed["class_labels"]
+        # 额外增强视角
+        for vname, aug in multi_view_transforms.items():
+            transformed = aug(image=img,
+                              bboxes=bboxes.tolist(),
+                              class_labels=labels.tolist())
+            t_img = transformed["image"]
+            t_bboxes = np.array(transformed.get("bboxes", []), dtype=np.float32).reshape(-1, 4)
+            t_bboxes = sanitize_yolo_bboxes(t_bboxes)
+            t_labels = np.array(transformed.get("class_labels", []), dtype=np.int64).reshape(-1)
 
-        # 转 torch
-        t_img_torch = torch.from_numpy(t_img).permute(2, 0, 1).float() / 255.0
-        t_img_torch = t_img_torch.to(device) # ⚡只把 image 放到和原图相同的 device
+            views.append((vname, t_img, t_bboxes, t_labels))
 
-        imgs.append(t_img_torch)
-        bboxes.append(np.array(t_bboxes)) # ⚡保持 CPU numpy
-        labels.append(t_labels)
-        im_files.append(f"{batch['im_file'][0]}_{view_name}")
+        # 将每个视角加入 batch
+        for vi, (vname, vimg, vbboxes, vlabels) in enumerate(views):
+            # image
+            vimg_t = torch.from_numpy(vimg).permute(2, 0, 1).float() / 255.0
+            vimg_t = vimg_t.to(device)
+            imgs.append(vimg_t)
 
-        # 收集可视化
-        vis_results.append((view_name, t_img, t_bboxes, t_labels))
+            # bboxes / cls
+            if vbboxes.shape[0] > 0:
+                bboxes_all.append(torch.tensor(vbboxes, dtype=torch.float32))
+                cls_all.append(torch.tensor(vlabels, dtype=torch.int64).unsqueeze(1))  # [N,1]
+                batch_idx_all.append(torch.full((vbboxes.shape[0],), len(imgs)-1, dtype=torch.int64))
+            else:
+                bboxes_all.append(torch.zeros((0,4), dtype=torch.float32))
+                cls_all.append(torch.zeros((0,1), dtype=torch.int64))
+                batch_idx_all.append(torch.zeros((0,), dtype=torch.int64))
 
-    # 拼接成新的 batch
-    batch["img"] = torch.stack(imgs, dim=0)   # 所有 img 在 cuda
-    batch["bboxes"] = [torch.tensor(b, dtype=torch.float32) for b in bboxes]  # 保持在 CPU
-    batch["cls"] = [torch.tensor(l, dtype=torch.int64) for l in labels]   # 保持在 CPU
+            im_files.append(f"{batch['im_file'][b]}_{vname}")
+            ori_shapes.append(batch["ori_shape"][b])
+            resized_shapes.append((vimg.shape[0], vimg.shape[1]))
+
+            # 可视化
+            if visualize:
+                os.makedirs(save_dir, exist_ok=True)
+                vis = vimg.copy()
+                H, W = vis.shape[:2]
+                for box, cls in zip(vbboxes, vlabels):
+                    cx, cy, bw, bh = box
+                    x1, y1 = int((cx - bw/2) * W), int((cy - bh/2) * H)
+                    x2, y2 = int((cx + bw/2) * W), int((cy + bh/2) * H)
+                    cv2.rectangle(vis, (x1,y1), (x2,y2), (0,255,0), 1)
+                    cv2.putText(vis, str(int(cls)), (x1,max(4,y1-3)),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,0), 1)
+                save_path = os.path.join(save_dir, f"{os.path.basename(batch['im_file'][b])}_{vname}.jpg")
+                cv2.imwrite(save_path, vis[..., ::-1])
+                print(f"Saved {save_path}")
+
+    # 拼接
+    batch["img"] = torch.stack(imgs, dim=0)
+    batch["bboxes"] = torch.cat(bboxes_all, dim=0) if len(bboxes_all) else torch.zeros((0,4), dtype=torch.float32)
+    batch["cls"] = torch.cat(cls_all, dim=0) if len(cls_all) else torch.zeros((0,1), dtype=torch.int64)
+    batch["batch_idx"] = torch.cat(batch_idx_all, dim=0) if len(batch_idx_all) else torch.zeros((0,), dtype=torch.int64)
+
     batch["im_file"] = im_files
-
-    # ✅ 可视化 + 保存
-    if visualize:
-        os.makedirs(save_dir, exist_ok=True)
-        for i, (name, img_np, boxes, lbls) in enumerate(vis_results):
-            img_vis = img_np.copy()
-
-            # 画 bbox（YOLO 格式 [x,y,w,h]，归一化）
-            h, w = img_vis.shape[:2]
-            for box, cls in zip(boxes, lbls):
-                cx, cy, bw, bh = box
-                x1 = int((cx - bw/2) * w)
-                y1 = int((cy - bh/2) * h)
-                x2 = int((cx + bw/2) * w)
-                y2 = int((cy + bh/2) * h)
-                cv2.rectangle(img_vis, (x1,y1), (x2,y2), (0,255,0), 1)
-                cv2.putText(img_vis, str(cls), (x1,y1-3),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,0), 1)
-                
-            orig_name = os.path.splitext(os.path.basename(batch['im_file'][0]))[0]  # 去掉扩展名
-            save_path = os.path.join(save_dir, f"{orig_name}_{name}.jpg")
-            cv2.imwrite(save_path, img_vis[..., ::-1])  # RGB->BGR
-            print(f"Saved {save_path}")
+    batch["ori_shape"] = ori_shapes
+    batch["resized_shape"] = resized_shapes
 
     return batch
