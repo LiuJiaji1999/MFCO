@@ -403,14 +403,14 @@ class BaseTrainer:
                     '''
                     
                     # 多视角增强
-                    # batch_v = generate_multiview_batch(batch,visualize=False)
+                    batch_v = generate_multiview_batch(batch,visualize=False)
 
                     # 全局一致性
                     
 
                     # 局部互补性
 
-                    self.loss, self.loss_items = self.model(batch)
+                    self.loss, self.loss_items = self.model(batch_v)
                     
 
                     # self.loss = self.oloss 
