@@ -157,6 +157,7 @@ class BaseTrainer:
         self.callbacks = _callbacks or callbacks.get_default_callbacks()
         if RANK in {-1, 0}:
             callbacks.add_integration_callbacks(self)
+        
 
     def add_callback(self, event: str, callback):
         """Appends the given callback."""
@@ -349,6 +350,10 @@ class BaseTrainer:
             self.plot_idx.extend([base_idx, base_idx + 1, base_idx + 2])
         epoch = self.start_epoch
         self.optimizer.zero_grad()  # zero any resumed gradients to ensure stability on train start
+        
+        # 在循环外部设置首次调用标志
+        first_multiview_call = True
+
         while True:
             self.epoch = epoch
             self.run_callbacks("on_train_epoch_start")
@@ -368,6 +373,7 @@ class BaseTrainer:
             if RANK in {-1, 0}:
                 LOGGER.info(self.progress_string())
                 pbar = TQDM(enumerate(self.train_loader), total=nb)
+
             self.tloss = None
             for i, batch in pbar: # 等同于batch_size 大小
                 self.run_callbacks("on_train_batch_start")
@@ -390,7 +396,7 @@ class BaseTrainer:
                 
                 # Forward
                 with autocast(self.amp):
-                    # print('开始处理 batch len(batch)=7 含im_file=1/ori_shape=1/resized_shape=1/img=1/cls=35/bboxes=35/batch_idx=35')
+                    # print('开始处理 batch len(batch)=7 含im_file/ori_shape/resized_shape/img/cls/bboxes/batch_idx')
                     batch = self.preprocess_batch(batch) # normalize img 
                     '''
                     len(batch['im_file'])= 1
@@ -402,8 +408,14 @@ class BaseTrainer:
                     batch['batch_idx'].shape = torch.Size([35])
                     '''
                     
+                    # 多视角增强 - 首次调用时输出
+                    if first_multiview_call:
+                        print('🎯首次调用 generate_multiview_batch 函数')
+                        first_multiview_call = False
+                    
                     # 多视角增强
                     batch_v = generate_multiview_batch(batch,visualize=False)
+                  
 
                     # 全局一致性
                     
