@@ -57,6 +57,7 @@ from ultralytics.utils.torch_utils import (
 from ultralytics.nn.extra_modules.kernel_warehouse import get_temperature
 
 from ultralytics.data.multiview import generate_multiview_batch
+import torch.nn.functional as F
 
 class BaseTrainer:
     """
@@ -415,22 +416,68 @@ class BaseTrainer:
                     
                     # 多视角增强
                     batch_v = generate_multiview_batch(batch,visualize=False)
-                  
+                    
+                    global_loss = 0.0
+                    local_loss = 0.0
+                    B = batch_v['img'].shape[0] // 6
+                    V = 6 # 视角数
+                    self.backbone_feature_dict = self.model(batch_v['img'],layers=True)
+                    # batch_v['img'].shape = torch.Size([12, 3, 640, 640])  B*6v
+                    # self.golbal_feature_dict[2].shape = torch.Size([12, 256, 160, 160])
+                    
+                    for layer in [2, 4, 6, 8, 9, 10]:
+                        feas = self.backbone_feature_dict[layer]
+                        if feas is None:
+                            continue
 
-                    # 全局一致性
+                        if layer in [10]: 
+                            # 全局一致性损失
+                            # -------------------
+                            # 1. 全局平均池化 -> [12, C]
+                            pooled = F.adaptive_avg_pool2d(feas, 1).squeeze(-1).squeeze(-1)  # [12, C]
+                            pooled = pooled.view(B, V, -1)  # [B, V, C]  # 2. 还原 batch 维度: [B, V, C] 其中 B=2, V=6
+                            # 3. 计算不同视角间的余弦相似度
+                            pooled_norm = F.normalize(pooled, dim=-1)  # [B, V, C] (a) 先归一化
+                            sim_matrix = torch.matmul(pooled_norm, pooled_norm.transpose(1, 2))   # (b) 计算视角两两之间的相似度: [B, V, V]
+                            # 4. 取非对角元素的平均作为 loss
+                            mask = torch.eye(V, device=sim_matrix.device).bool()
+                            sim_matrix = sim_matrix.masked_fill(mask.unsqueeze(0), 0)  
+                            global_consistency = sim_matrix.sum() / (B * V * (V - 1))
+                            # 5. 损失定义为 1 - 平均相似度
+                            global_loss = global_loss + (1 - global_consistency)
+
+                        if layer in [2, 4, 6, 8, 9]: 
+                            # -------------------
+                            # 局部互补性损失
+                            # -------------------
+                            # 1.划分成patch
+                            patches = F.adaptive_avg_pool2d(feas, (3, 3))  # [12, C, 3, 3]  (比如 2x2 或 3x3)
+                            patches = patches.flatten(2).permute(0, 2, 1)  # [12, C, V]  -> 每个视角9个patch  # [12, V, C]
+                            patches = patches.view(B, V, -1, patches.size(-1))  # [B, V, P, C]
+                            patches = F.normalize(patches, dim=-1)  # [B, V, P, C]
+                            patch_loss = 0.0
+                            # 对齐 patch index → 逐 patch 对比，能直接实现 “同 patch 跨视角互补”。
+                            # (b) 针对每个 patch 位置，计算不同视角间相似度
+                            for p in range(patches.size(2)):   # 遍历每个 patch index
+                                patch_feat = patches[:, :, p, :]      # [B, V, C] 取第 p 个 patch
+                                sim_matrix = torch.matmul(patch_feat, patch_feat.transpose(1, 2))  # [B, V, V]
+                                # 去掉自视角对角线
+                                mask = torch.eye(V, device=sim_matrix.device).bool()
+                                sim_matrix = sim_matrix.masked_fill(mask.unsqueeze(0), 0)
+                                # 如果你要“互补性” → 惩罚过高相似度  
+                                loss_p = sim_matrix.mean()
+                                patch_loss = patch_loss + loss_p
+                            local_loss = local_loss + patch_loss / patches.size(2)   # 平均不同 patch 的约束
+
+                    self.det_loss, self.det_loss_items = self.model(batch_v)
                     
 
-                    # 局部互补性
-                    
-
-                    self.loss, self.loss_items = self.model(batch_v)
-                    
-
-                    # self.loss = self.oloss 
-                    # self.loss_items = torch.cat([
-                    #     self.oloss_items,  # 原有的 cls、bbox、dfl 损失
-                        
-                    # ])
+                    self.loss = self.det_loss + global_loss + local_loss
+                    self.loss_items = torch.cat([
+                        self.det_loss_items,  # 原有的 cls、bbox、dfl 损失
+                        global_loss.detach().unsqueeze(0),
+                        local_loss.detach().unsqueeze(0)
+                    ])
 
                     if RANK != -1:
                         self.loss *= world_size

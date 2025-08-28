@@ -165,7 +165,7 @@ class BaseModel(nn.Module):
             return self.loss(x, *args, **kwargs)
         return self.predict(x, *args, **kwargs)
 
-    def predict(self, x, profile=False, visualize=False, augment=False, embed=None):
+    def predict(self, x, profile=False, visualize=False, augment=False, embed=None, layers=False):
         """
         Perform a forward pass through the network.
 
@@ -181,7 +181,62 @@ class BaseModel(nn.Module):
         """
         if augment:
             return self._predict_augment(x)
-        return self._predict_once(x, profile, visualize, embed)
+        return self.mv_predict_once(x, profile, visualize, embed, layers)
+
+    def mv_predict_once(self, x, profile=False, visualize=False, embed=None,layers=False):
+
+        y, dt, embeddings = [], [], []  # outputs y是指保存self.save的特征图
+        # print('self.save 是  ',self.save) #[4, 6, 10, 13, 16, 19,22]
+        out_feas_dict = {}
+        # print('******************* task.py/mv_predict_once')
+
+        for m in self.model:
+            if m.f != -1:  # if not from previous layer
+                x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
+            
+            if profile:
+                self._profile_one_layer(m, x, dt)
+
+            if layers:
+                # print(f"predect.py ⚠️ Computing features at stage {m.i}")
+                if m.i in [2, 4, 6, 8, 9, 10]:  # 判断层数是否属于 [2, 4, 6, 8, 9, 10, 13, 16, 19, 22] 
+                    # print(f'Saving features at stage {m.i}')
+                    out_feas_dict[m.i] = m(x)  # 保存当前层的特征图
+                if m.i == 23:
+                    return out_feas_dict
+                    
+            if hasattr(m, 'backbone'):
+                x = m(x)
+                for _ in range(5 - len(x)):
+                    x.insert(0, None)
+                for i_idx, i in enumerate(x):
+                    if i_idx in self.save:
+                        y.append(i)
+                    else:
+                        y.append(None)
+                # for i in x:
+                #     if i is not None:
+                #         print(i.size())
+                x = x[-1]
+
+            else:
+                x = m(x)  # run
+                y.append(x if m.i in self.save else None)  # save output
+
+            if visualize:     
+                feature_visualization(x, m.type, m.i, save_dir=visualize)
+
+            if embed and m.i in embed:
+                embeddings.append(nn.functional.adaptive_avg_pool2d(x, (1, 1)).squeeze(-1).squeeze(-1))  # flatten
+                if m.i == max(embed):
+                    return torch.unbind(torch.cat(embeddings, 1), dim=0)
+        
+        # # 返回所有保存的特征图
+        # if layers and out_feas_list:
+        #     out_feas = torch.stack(out_feas_list).squeeze(0)  # 将所有特征图堆叠为一个张量
+        #     return out_feas
+
+        return x
 
     def _predict_once(self, x, profile=False, visualize=False, embed=None):
         """
