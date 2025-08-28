@@ -116,8 +116,11 @@ class BaseValidator:
             model = trainer.ema.ema or trainer.model
             model = model.half() if self.args.half else model.float()
             # self.model = model
-            # self.loss = torch.zeros_like(trainer.loss_items, device=trainer.device)
-            self.loss = torch.zeros(3, device=trainer.device)
+            # self.loss = torch.zeros_like(trainer.loss_items, device=trainer.device) 
+
+            # 本来仅有 cls、bbox、dfl 损失 
+            # 但 ultralytics/models/yolo/detect/train.py 改为trainer.loss_items = 5项了，所以变更为:
+            self.loss = torch.zeros(3, device=trainer.device) # 表示val时也仅考虑原cls、bbox、dfl  3项 损失
             self.args.plots &= trainer.stopper.possible_stop or (trainer.epoch == trainer.epochs - 1)
             model.eval()
         else:
