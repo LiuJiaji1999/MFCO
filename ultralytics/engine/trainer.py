@@ -469,6 +469,19 @@ class BaseTrainer:
                                 patch_loss = patch_loss + loss_p
                             local_loss = local_loss + patch_loss / patches.size(2)   # 平均不同 patch 的约束
 
+                            # # (c) 计算不同视角下 patch 相似度
+                            # 目前在 patch 维度做平均 → 相当于只约束“整体局部特征”。
+                            # # 先按 patch 取均值，再计算余弦相似度
+                            # mean_patch = patches_norm.mean(2)  # [B, V, C]
+                            # sim_matrix_local = torch.matmul(mean_patch, mean_patch.transpose(1, 2))  # [B, V, V]
+                            # # (d) 希望不同视角**互补** → 相似度不要过高
+                            # mask = torch.eye(V, device=sim_matrix_local.device).bool()
+                            # sim_matrix_local = sim_matrix_local.masked_fill(mask.unsqueeze(0), 0)
+                            # local_complement = sim_matrix_local.sum() / (B * V * (V - 1))
+                            # # 损失定义为 "过高相似度的惩罚"
+                            # local_loss = local_loss + local_complement
+
+
                     self.det_loss, self.det_loss_items = self.model(batch_v)
                     
 
