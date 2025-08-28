@@ -20,6 +20,6 @@ if __name__ == '__main__':
                 resume=True, # 断点续训,YOLO初始化时选择last.pt
                 # amp=False, # close amp | loss出现nan可以关闭amp
                 # fraction=0.2,
-                project='runs/debug',
+                project='runs/train',
                 name='exp',
                 )
