@@ -70,8 +70,10 @@ def generate_multiview_batch(batch, visualize=False, save_dir="/home/lenovo/data
     输出: 多视角增强后的 batch，保持原始格式一致
            img:[B*V, C, H, W], cls:[N_total,1], bboxes:[N_total,4], batch_idx:[N_total]
     """
+   
+
     device = batch["img"].device
-    
+    aug_views = []
     imgs = []
     bboxes_all = []
     cls_all = []
@@ -143,6 +145,15 @@ def generate_multiview_batch(batch, visualize=False, save_dir="/home/lenovo/data
                 save_path = os.path.join(save_dir, f"{os.path.basename(batch['im_file'][b])}_{vname}.jpg")
                 cv2.imwrite(save_path, vis[..., ::-1])
                 print(f"Saved {save_path}")
+    
+     # 添加首次调用标志
+    if not hasattr(generate_multiview_batch, "_first_call"):
+        print("\n")
+        print("🎯 首次调用 generate_multiview_batch 函数")
+        for i in range(len(views)):
+            aug_views.append(views[i][0])
+        print('🥐aug view have:',aug_views)
+        generate_multiview_batch._first_call = True
 
     # 拼接
     batch["img"] = torch.stack(imgs, dim=0)

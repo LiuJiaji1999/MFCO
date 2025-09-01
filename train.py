@@ -22,7 +22,7 @@ if __name__ == '__main__':
                 # amp=False, # close amp | loss出现nan可以关闭amp
                 # cos_lr = True,
                 # fraction=0.2,
-                project='runs/train',
+                project='runs/debug',
                 name='exp',
                 )
     # ## seg

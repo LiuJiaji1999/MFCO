@@ -351,9 +351,6 @@ class BaseTrainer:
             self.plot_idx.extend([base_idx, base_idx + 1, base_idx + 2])
         epoch = self.start_epoch
         self.optimizer.zero_grad()  # zero any resumed gradients to ensure stability on train start
-        
-        # 在循环外部设置首次调用标志
-        first_multiview_call = True
 
         while True:
             self.epoch = epoch
@@ -400,7 +397,7 @@ class BaseTrainer:
                     # print('开始处理 batch len(batch)=7 含im_file/ori_shape/resized_shape/img/cls/bboxes/batch_idx')
                     batch = self.preprocess_batch(batch) # normalize img 
                     ### 原损失
-                    self.loss, self.loss_items = self.model(batch)
+                    # self.loss, self.loss_items = self.model(batch)
 
                     '''
                     len(batch['im_file'])= 1
@@ -412,13 +409,9 @@ class BaseTrainer:
                     batch['batch_idx'].shape = torch.Size([35])
                     '''
                     
-                    # # 多视角增强 - 首次调用时输出
-                    # if first_multiview_call:
-                    #     print('🎯首次调用 generate_multiview_batch 函数')
-                    #     first_multiview_call = False
-                    
-                    # # 多视角增强
-                    # batch_v = generate_multiview_batch(batch,visualize=False)
+                    # 多视角增强
+                    batch_v = generate_multiview_batch(batch,visualize=False)
+                    self.loss, self.loss_items = self.model(batch_v)
                     
                     # global_loss = 0.0
                     # local_loss = 0.0
