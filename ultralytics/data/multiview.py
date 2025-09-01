@@ -13,25 +13,25 @@ multi_view_transforms = {
         A.Resize(640, 640, always_apply=True)  # 保证统一大小
     ], bbox_params=A.BboxParams(format='yolo', label_fields=['class_labels'])),
 
-    "near": A.Compose([
-        A.RandomResizedCrop(640, 640, scale=(0.8, 1.2), ratio=(0.75, 1.33), always_apply=True),
-        A.Resize(640, 640, always_apply=True)  # 保证统一大小
-    ], bbox_params=A.BboxParams(format='yolo', label_fields=['class_labels'])),
+    # "near": A.Compose([
+    #     A.RandomResizedCrop(640, 640, scale=(0.8, 1.2), ratio=(0.75, 1.33), always_apply=True),
+    #     A.Resize(640, 640, always_apply=True)  # 保证统一大小
+    # ], bbox_params=A.BboxParams(format='yolo', label_fields=['class_labels'])),
 
-    "shear": A.Compose([
-        A.Affine(shear={"x": (-15, 15), "y": (-10, 10)}, p=1.0),
-        A.Resize(640, 640, always_apply=True)  # 保证统一大小
-    ], bbox_params=A.BboxParams(format='yolo', label_fields=['class_labels'])),
+    # "shear": A.Compose([
+    #     A.Affine(shear={"x": (-15, 15), "y": (-10, 10)}, p=1.0),
+    #     A.Resize(640, 640, always_apply=True)  # 保证统一大小
+    # ], bbox_params=A.BboxParams(format='yolo', label_fields=['class_labels'])),
 
-    "affine": A.Compose([
-        A.Affine(scale=(0.8, 1.2), rotate=(-15, 15), translate_percent=(0.1, 0.1), p=1.0),
-        A.Resize(640, 640, always_apply=True)  # 保证统一大小
-    ], bbox_params=A.BboxParams(format='yolo', label_fields=['class_labels'])),
+    # "affine": A.Compose([
+    #     A.Affine(scale=(0.8, 1.2), rotate=(-15, 15), translate_percent=(0.1, 0.1), p=1.0),
+    #     A.Resize(640, 640, always_apply=True)  # 保证统一大小
+    # ], bbox_params=A.BboxParams(format='yolo', label_fields=['class_labels'])),
 
-    "color": A.Compose([
-        A.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.2, p=1.0),
-        A.Resize(640, 640, always_apply=True)  # 保证统一大小
-    ], bbox_params=A.BboxParams(format='yolo', label_fields=['class_labels'])),
+    # "color": A.Compose([
+    #     A.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.2, p=1.0),
+    #     A.Resize(640, 640, always_apply=True)  # 保证统一大小
+    # ], bbox_params=A.BboxParams(format='yolo', label_fields=['class_labels'])),
 }
 
 
