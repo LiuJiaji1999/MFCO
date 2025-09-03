@@ -28,10 +28,10 @@ multi_view_transforms = {
         A.Resize(640, 640, always_apply=True)  # 保证统一大小
     ], bbox_params=A.BboxParams(format='yolo', label_fields=['class_labels'])),
 
-    # "color": A.Compose([
-    #     A.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.2, p=1.0),
-    #     A.Resize(640, 640, always_apply=True)  # 保证统一大小
-    # ], bbox_params=A.BboxParams(format='yolo', label_fields=['class_labels'])),
+    "color": A.Compose([
+        A.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.2, p=1.0),
+        A.Resize(640, 640, always_apply=True)  # 保证统一大小
+    ], bbox_params=A.BboxParams(format='yolo', label_fields=['class_labels'])),
 }
 
 
