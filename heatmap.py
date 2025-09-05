@@ -11,7 +11,7 @@ from ultralytics import YOLO
 from ultralytics.nn.tasks import attempt_load_weights
 from ultralytics.utils.torch_utils import intersect_dicts
 from ultralytics.utils.ops import xywh2xyxy, non_max_suppression
-from pytorch_grad_cam import GradCAMPlusPlus, GradCAM, XGradCAM, EigenCAM, HiResCAM, LayerCAM, RandomCAM, EigenGradCAM, KPCA_CAM, AblationCAM
+from pytorch_grad_cam import GradCAMPlusPlus, GradCAM, XGradCAM, EigenCAM, HiResCAM, LayerCAM, RandomCAM, EigenGradCAM, AblationCAM
 from pytorch_grad_cam.utils.image import show_cam_on_image, scale_cam_image
 from pytorch_grad_cam.activations_and_gradients import ActivationsAndGradients
 
@@ -343,14 +343,14 @@ class yolo_heatmap:
         
 def get_params():
     params = {
-        'weight': 'yolo11n.pt', # 现在只需要指定权重即可,不需要指定cfg
+        'weight': 'runs/train/exp2/weights/best.pt', # 现在只需要指定权重即可,不需要指定cfg
         'device': 'cuda:0',
-        'method': 'GradCAMPlusPlus', # GradCAMPlusPlus, GradCAM, XGradCAM, EigenCAM, HiResCAM, LayerCAM, RandomCAM, EigenGradCAM, KPCA_CAM
-        'layer': [10, 12, 14, 16, 18],
+        'method': 'EigenGradCAM', # GradCAMPlusPlus, GradCAM, XGradCAM, EigenCAM, HiResCAM, LayerCAM, RandomCAM, EigenGradCAM, KPCA_CAM
+        'layer': [10, 12, 15, 18, 21, 22], # [2,4,6,8,9,10]
         'backward_type': 'all', # detect:<class, box, all> segment:<class, box, segment, all> pose:<box, keypoint, all> obb:<box, angle, all> classify:<all>
         'conf_threshold': 0.2, # 0.2
         'ratio': 0.02, # 0.02-0.1
-        'show_result': True, # 不需要绘制结果请设置为False
+        'show_result': False, # 不需要绘制结果请设置为False
         'renormalize': False, # 需要把热力图限制在框内请设置为True(仅对detect,segment,pose有效)
         'task':'detect', # 任务(detect,segment,pose,obb,classify)
         'img_size':640, # 图像尺寸
@@ -358,7 +358,10 @@ def get_params():
     return params
 
 # pip install grad-cam==1.5.4 --no-deps
+# 原 grad-cam==1.4.8
 if __name__ == '__main__':
     model = yolo_heatmap(**get_params())
-    model(r'/home/hjj/Desktop/dataset/dataset_coco/coco/images/val2017/000000361238.jpg', 'result')
-    # model(r'/home/hjj/Desktop/dataset/dataset_coco/coco/images/val2017', 'result')
+    # model(r'/home/hjj/Desktop/dataset/dataset_coco/coco/images/val2017/000000361238.jpg', 'result')
+    model(r'/home/lenovo/data/liujiaji/powerGit/mvod/image/multiview/localhostview', 
+          '/home/lenovo/data/liujiaji/powerGit/mvod/image/multiview/result')
+    # HiResCAM,LayerCAM,EigenGradCAM
