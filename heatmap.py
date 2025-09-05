@@ -345,7 +345,7 @@ def get_params():
     params = {
         'weight': 'runs/train/exp2/weights/best.pt', # 现在只需要指定权重即可,不需要指定cfg
         'device': 'cuda:0',
-        'method': 'EigenGradCAM', # GradCAMPlusPlus, GradCAM, XGradCAM, EigenCAM, HiResCAM, LayerCAM, RandomCAM, EigenGradCAM, KPCA_CAM
+        'method': 'GradCAMPlusPlus', # GradCAMPlusPlus, GradCAM, XGradCAM, EigenCAM, HiResCAM, LayerCAM, RandomCAM, EigenGradCAM, KPCA_CAM
         'layer': [10, 12, 15, 18, 21, 22], # [2,4,6,8,9,10]
         'backward_type': 'all', # detect:<class, box, all> segment:<class, box, segment, all> pose:<box, keypoint, all> obb:<box, angle, all> classify:<all>
         'conf_threshold': 0.2, # 0.2
@@ -364,4 +364,5 @@ if __name__ == '__main__':
     # model(r'/home/hjj/Desktop/dataset/dataset_coco/coco/images/val2017/000000361238.jpg', 'result')
     model(r'/home/lenovo/data/liujiaji/powerGit/mvod/image/multiview/localhostview', 
           '/home/lenovo/data/liujiaji/powerGit/mvod/image/multiview/heatmap')
-    # HiResCAM,LayerCAM,EigenGradCAM
+    # LayerCAM,EigenGradCAM HiResCAM
+    # GradCAMPlusPlus 差异性明显
