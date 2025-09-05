@@ -27,13 +27,15 @@ from ultralytics import YOLO
 from ultralytics.utils.torch_utils import select_device
 from ultralytics.nn.tasks import attempt_load_weights
 
+
+
 def get_weight_size(path):
     stats = os.stat(path)
     return f'{stats.st_size / 1024 / 1024:.1f}'
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weights', type=str, default='/home/lenovo/data/liujiaji/ultralytics-yolo11-main/runs/train/exp2/weights/best.pt', help='trained weights path')
+    parser.add_argument('--weights', type=str, default='/home/lenovo/data/liujiaji/ultralytics-yolo11-main/runs/train/exp4/weights/best.pt', help='trained weights path')
     parser.add_argument('--batch', type=int, default=16, help='total batch size for all GPUs')
     parser.add_argument('--imgs', nargs='+', type=int, default=[640, 640], help='[height, width] image sizes')
     parser.add_argument('--device', default='', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
@@ -59,7 +61,15 @@ if __name__ == '__main__':
     if opt.half:
         model = model.half()
         example_inputs = example_inputs.half()
-    
+
+    # # ================= FLOPs 计算 ================= #
+    try:
+        model.info(detailed=True, verbose=True, imgsz=opt.imgs)
+    except Exception as e:
+        print(f"⚠️ YOLO model.info FLOPs 计算失败: {e}")
+
+
+   # ================= Latency 测试 ================= #
     print('begin warmup...')
     for i in tqdm(range(opt.warmup), desc='warmup....'):
         model(example_inputs)

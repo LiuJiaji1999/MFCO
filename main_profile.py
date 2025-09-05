@@ -5,7 +5,7 @@ from ultralytics import YOLO
 if __name__ == '__main__':
     # choose your yaml file
     model = YOLO('ultralytics/cfg/models/11/yolo11n.yaml')
-    model.info(detailed=True)
+    model.info(detailed=True,verbose=True)
     try:
         model.profile(imgsz=[640, 640])
     except Exception as e:
