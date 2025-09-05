@@ -4,11 +4,13 @@ from ultralytics import YOLO
 
 
 if __name__ == '__main__':
-    model = YOLO('runs/train/exp4/weights/best.pt') # select your model.pt path
-    model.predict(source='/home/lenovo/data/liujiaji/powerGit/yolov8/testImg',
+    model = YOLO('runs/train/exp2/weights/best.pt') # select your model.pt path
+    model.predict(
+                  source='/home/lenovo/data/liujiaji/Datasets-Power/privatepower/pin/rust/img',
+                  # source='/home/lenovo/data/liujiaji/powerGit/yolov8/testImg',
                   imgsz=640,
                   project='runs/detect',
-                  name='exp4',
+                  name='exp2-rust',
                   save=True,
                   conf=0.3,
                   # iou=0.7,
