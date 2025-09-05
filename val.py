@@ -6,11 +6,6 @@ from prettytable import PrettyTable
 from ultralytics import YOLO
 from ultralytics.utils.torch_utils import model_info
 
-# BILIBILI UP 魔傀面具
-# 验证参数官方详解链接：https://docs.ultralytics.com/modes/val/#usage-examples:~:text=of%20each%20category-,Arguments%20for%20YOLO%20Model%20Validation,-When%20validating%20YOLO
-
-# 精度小数点保留位数修改问题可看<使用说明.md>下方的<YOLOV8源码常见疑问解答小课堂>第五点
-# 最终论文的参数量和计算量统一以这个脚本运行出来的为准
 
 def get_weight_size(path):
     stats = os.stat(path)
@@ -30,7 +25,7 @@ if __name__ == '__main__':
                         name='exp',
                         )
     
-    # if model.task == 'detect': # 仅目标检测任务适用 需要改别的任务可以看：https://www.bilibili.com/video/BV1dBQDY6Ec5/
+    # if model.task == 'detect': 
     #     length = result.box.p.size
     #     model_names = list(result.names.values())
     #     preprocess_time_per_image = result.speed['preprocess']
