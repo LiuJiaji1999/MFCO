@@ -353,7 +353,7 @@ def get_params():
         'show_result': False, # 不需要绘制结果请设置为False
         'renormalize': False, # 需要把热力图限制在框内请设置为True(仅对detect,segment,pose有效)
         'task':'detect', # 任务(detect,segment,pose,obb,classify)
-        'img_size':640, # 图像尺寸
+        'img_size':384, # 图像尺寸
     }
     return params
 
@@ -363,5 +363,5 @@ if __name__ == '__main__':
     model = yolo_heatmap(**get_params())
     # model(r'/home/hjj/Desktop/dataset/dataset_coco/coco/images/val2017/000000361238.jpg', 'result')
     model(r'/home/lenovo/data/liujiaji/powerGit/mvod/image/multiview/localhostview', 
-          '/home/lenovo/data/liujiaji/powerGit/mvod/image/multiview/result')
+          '/home/lenovo/data/liujiaji/powerGit/mvod/image/multiview/heatmap')
     # HiResCAM,LayerCAM,EigenGradCAM
