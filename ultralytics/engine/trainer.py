@@ -481,7 +481,7 @@ class BaseTrainer:
                     self.det_loss, self.det_loss_items = self.model(batch_v)
                     
 
-                    self.loss = self.det_loss + global_loss + local_loss
+                    self.loss = self.det_loss + 0.5 * global_loss + 0.5 * local_loss
                     self.loss_items = torch.cat([
                         self.det_loss_items,  # 原有的 cls、bbox、dfl 损失
                         global_loss.detach().unsqueeze(0),
