@@ -1068,6 +1068,12 @@ def plot_pr_curve(px, py, ap, save_dir=Path("pr_curve.png"), names={}, on_plot=N
     if 0 < len(names) < 21:  # display per-class legend if < 21 classes
         for i, y in enumerate(py.T):
             ax.plot(px, y, linewidth=1, label=f"{names[i]} {ap[i, 0]:.3f}")  # plot(recall, precision)
+            ## 汇总所有pr曲线到一张图上
+            ####### start  ##########
+            with open(f'/home/lenovo/data/liujiaji/powerGit/mvod/PR-curve/yolov11/{names[i]}.csv','w+') as f:
+                for px_v,y_v in zip(px,y):
+                    f.write(f'{px_v},{y_v}\n')
+            ####### end  ##########
     else:
         ax.plot(px, py, linewidth=1, color="grey")  # plot(recall, precision)
 
