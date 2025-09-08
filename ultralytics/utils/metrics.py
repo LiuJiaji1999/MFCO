@@ -1070,7 +1070,7 @@ def plot_pr_curve(px, py, ap, save_dir=Path("pr_curve.png"), names={}, on_plot=N
             ax.plot(px, y, linewidth=1, label=f"{names[i]} {ap[i, 0]:.3f}")  # plot(recall, precision)
             ## 汇总所有pr曲线到一张图上
             ####### start  ##########
-            # with open(f'/home/lenovo/data/liujiaji/powerGit/mvod/PR-curve/mfenet/{names[i]}.csv','w+') as f:
+            # with open(f'/home/lenovo/data/liujiaji/powerGit/mvod/PR-curve/YOLOv11/{names[i]}.csv','w+') as f:
             #     for px_v,y_v in zip(px,y):
             #         f.write(f'{px_v},{y_v}\n')
             ####### end  ##########
