@@ -12,7 +12,7 @@ This is our PyTorch implementation of the paper "[`A Multi-view Feature Enhancem
 ```bash
 /dataset/powerdata.yaml: Private power data 
     # Due to the signing of a confidentiality agreement, this dataset is not publicly available at this time.
-/dataset/publicpower.yaml: Public power data
+/dataset/publicallpower.yaml: Public power data
     # CPLID: https://github.com/InsulatorData/InsulatorDataSet
     # IDID: https://ieee-dataport.org/competitions/insulator-defect-detection
     # VPMBGI: https://github.com/phd-benel/VPMBGI
