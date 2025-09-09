@@ -59,6 +59,7 @@ nohup python train.py > /log/XXX.log 2>&1 & tail -f /log/XXX.log
 <summary>Test</summary>
 
 ```bash
+Since github cannot push big file, we put '.pt' into the Google Drive,so you can directly test # https://drive.google.com/drive/folders/1SSlZEZvlthQqWaZFEPYCWwkEe-40fqsX
 python val.py # test dataset 
 python detect.py # visualize
 ```
