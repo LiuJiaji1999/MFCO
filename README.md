@@ -1,5 +1,5 @@
 
-## A Multi-view Feature Enhancement Detection Method Integrating Consistency and Complementarity
+## Multi-View Object Detection
 
 ## Introduction
 This is our PyTorch implementation of the paper "[`A Multi-view Feature Enhancement Detection Method Integrating Consistency and Complementarity`].
@@ -8,12 +8,23 @@ This is our PyTorch implementation of the paper "[`A Multi-view Feature Enhancem
     <img src="mfenet.png" width="1000" alt="MFENet">
 </div>
 
-## <div align="left">Quick Start Examples</div>
+## Dataset
+```bash
+/dataset/powerdata.yaml: Private power data 
+    # Due to the signing of a confidentiality agreement, this dataset is not publicly available at this time.
+/dataset/publicpower.yaml: Public power data
+    # CPLID: https://github.com/InsulatorData/InsulatorDataSet
+    # IDID: https://ieee-dataport.org/competitions/insulator-defect-detection
+    # VPMBGI: https://github.com/phd-benel/VPMBGI
+/dataset/VisDrone.yaml:VisDrone2019 
+    # https://github.com/VisDrone/VisDrone-Dataset
+other...
+```
+
+## Quick Start Examples
 
 <details open>
 <summary>Install</summary>
-
-First, clone the project and configure the environment.
 
 ```bash
 export WANDB_MODE=disabled
@@ -37,7 +48,9 @@ numpy: 1.22.3
 <summary>Train</summary>
 
 ```shell
-python train.py
+python train.py 
+# save outputlog
+nohup python train.py > /log/XXX.log 2>&1 & tail -f /log/XXX.log
 ```
 </details>
 
@@ -46,50 +59,26 @@ python train.py
 <summary>Test</summary>
 
 ```bash
-python val.py
+python val.py # test dataset 
+python detect.py # visualize
 ```
 </details>
 
 
-
-### Experimental flow chart
-
-<div align="center">
-    <img src="img/workflow.png" width="700" alt="workflow">
-</div>
-
-
-### Detection result
-<div align="center">
-    <img src="img/comparison_result.png" width="800" alt="comparison result">
-</div>
-
-<div align="center">
-    <img src="img/detection_result.png" width="800" alt="detection result">
-</div>
-
-
-
 #### Explanation of the file
 ```bash
-1. train.py ：训练模型的脚本
-2. main_profile.py ：输出模型和模型每一层的参数,计算量的脚本
-3. val.py ：使用训练好的模型计算指标的脚本
-4. detect.py ： 推理的脚本
-5. track.py：跟踪推理的脚本
-6. test_yaml.py：用来测试所有yaml是否能正常运行的脚本
-7. heatmap.py ：生成热力图的脚本
-8. get_FPS.py ：计算模型储存大小、模型推理时间、FPS的脚本
-    FPS最严谨来说就是1000(1s)/(preprocess+inference+postprocess),
-    ✅没那么严谨的话就是只除以inference的时间
-9. get_COCO_metrice.py：计算COCO指标的脚本
-10. plot_result.py：绘制曲线对比图的脚本
-11. transform_PGI.py去掉PGI模块.
-12. export.py：  导出onnx脚本.
-13. get_model_erf.py ： 绘制模型的有效感受野.
+1. main_profile.py ：model.info
+2. test_yaml.py：test all yaml is run 
+3. heatmap.py ：heatmap
+4. get_FPS.py ：compute model param、inference-time、FPS
+5. plot_result.py：visualize compare
+6. get_model_erf.py ： erf
+7. test_other.py: debug
 ```
 
-###### input
+<details >
+<summary>Personal Debug</summary>
+
 ```bash
 print('一. trainer.py/get_dataset 先从yaml文件获取 train')
 print('二. trainer.py/get_dataloader 开始加载训练数据')
@@ -99,7 +88,7 @@ print('五. dataset.py/build_transforms 开始数据增强')
 print('六. augment.py/v8_transforms 开始执行数据增强函数，') #随机增强方式直接替换原图送进模型    
 print('七.ultralytics/data/base.py/get_image_and_label，数据增强后的图片-标签对应'）
 ```
-
+</details>
 
 
 

@@ -159,12 +159,12 @@ class yolov8_erf:
 
 def get_params():
     params = {
-        'weight': 'yolov8n.pt', # 只需要指定权重即可
+        'weight': 'runs/train/exp4/weights/best.pt', # 只需要指定权重即可
         'device': 'cuda:0',
-        'layer': '10', # string
-        'dataset': '',
+        'layer': '22', # string
+        'dataset': '/home/lenovo/data/liujiaji/yolov8/powerdata/images/test',
         'num_images': 50,
-        'save_path': 'result.png'
+        'save_path': 'result1.png'
     }
     return params
 

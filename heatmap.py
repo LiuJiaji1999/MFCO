@@ -320,7 +320,7 @@ class yolo_heatmap:
                                   conf=True, # 显示置信度
                                   font_size=None, # 字体大小，None为根据当前image尺寸计算
                                   line_width=None, # 线条宽度，None为根据当前image尺寸计算
-                                  labels=False, # 显示标签
+                                  labels=True, # 显示标签
                                   )
         
         # 去掉padding边界
@@ -348,12 +348,12 @@ def get_params():
         'method': 'EigenGradCAM', # GradCAMPlusPlus, GradCAM, XGradCAM, EigenCAM, HiResCAM, LayerCAM, RandomCAM, EigenGradCAM, KPCA_CAM
         'layer': [10, 12, 15, 18, 21, 22], # [2,4,6,8,9,10]
         'backward_type': 'all', # detect:<class, box, all> segment:<class, box, segment, all> pose:<box, keypoint, all> obb:<box, angle, all> classify:<all>
-        'conf_threshold': 0.2, # 0.2
+        'conf_threshold': 0.3, # 0.2
         'ratio': 0.02, # 0.02-0.1
         'show_result': True, # 不需要绘制结果请设置为False
-        'renormalize': True, # 需要把热力图限制在框内请设置为True(仅对detect,segment,pose有效)
+        'renormalize': False, # 需要把热力图限制在框内请设置为True(仅对detect,segment,pose有效)
         'task':'detect', # 任务(detect,segment,pose,obb,classify)
-        'img_size':384, # 图像尺寸
+        'img_size':640, # 图像尺寸
     }
     return params
 
@@ -362,7 +362,7 @@ def get_params():
 if __name__ == '__main__':
     model = yolo_heatmap(**get_params())
     # model(r'/home/hjj/Desktop/dataset/dataset_coco/coco/images/val2017/000000361238.jpg', 'result')
-    model(r'/home/lenovo/data/liujiaji/powerGit/yolov8/testImg', 
-          '/home/lenovo/data/liujiaji/powerGit/mvod/image/detecthm')
+    model(r'/home/lenovo/data/liujiaji/powerGit/mvod/image/detecthm/input', 
+          '/home/lenovo/data/liujiaji/powerGit/mvod/image/detecthm/yolov11')
     # LayerCAM,EigenGradCAM HiResCAM
     # GradCAMPlusPlus 差异性明显
