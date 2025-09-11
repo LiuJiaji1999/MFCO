@@ -5,7 +5,7 @@
 This is our PyTorch implementation of the paper "[`Multi-view Feature Collaborative Optimization Network for Object Detection`].
 
 <div align="center">
-    <img src="mfenet.png" width="1000" alt="MFENet">
+    <img src="MFCONet.png" width="1000" alt="MFCONet">
 </div>
 
 ## 🚩Dataset
