@@ -1,14 +1,14 @@
 
 ## Multi-View Object Detection
 
-## Introduction
-This is our PyTorch implementation of the paper "[`A Multi-view Feature Enhancement Detection Method Integrating Consistency and Complementarity`].
+## 💡Introduction
+This is our PyTorch implementation of the paper "[`Multi-view Feature Collaborative Optimization Network for Object Detection`].
 
 <div align="center">
     <img src="mfenet.png" width="1000" alt="MFENet">
 </div>
 
-## Dataset
+## 🚩Dataset
 ```bash
 /dataset/powerdata.yaml: Private power data 
     # Due to the signing of a confidentiality agreement, this dataset is not publicly available at this time.
@@ -21,7 +21,7 @@ This is our PyTorch implementation of the paper "[`A Multi-view Feature Enhancem
 other...
 ```
 
-## Quick Start Examples
+## 🛠️Quick Start Examples
 
 <details open>
 <summary>Install</summary>
@@ -66,8 +66,13 @@ python detect.py # visualize
 ```
 </details>
 
+#### 📢Plan
+```bash
+We will modify network to the COD/SOD,enabling fair comparison with other methods.
+Thanks again to the sprirt of the open-source:https://github.com/stars/LiuJiaji1999/lists/mvod
+```
 
-#### Explanation of the file
+#### 🌟Explanation of the file
 ```bash
 1. main_profile.py ：model.info
 2. test_yaml.py：test all yaml is run 
