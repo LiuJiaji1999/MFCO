@@ -68,7 +68,7 @@ python detect.py # visualize
 
 #### 📢Plan
 ```bash
-We will modify network to the COD/SOD,enabling fair comparison with other methods.
+We will modify network to the Camouflaged/Salient Object Detection,enabling fair comparison with other methods.
 Thanks again to the sprirt of the open-source:https://github.com/stars/LiuJiaji1999/lists/mvod
 ```
 
