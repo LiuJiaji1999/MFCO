@@ -46,10 +46,10 @@ metric_keys = {
 
 # ---------------- 画布：2行6列 ----------------
 fig, axes = plt.subplots(2, 6, figsize=(28, 10))
-axes = axes.flatten()
 
 # ---- 前4列（8个子图）画 Loss ----
-for ax, (key, title) in zip(axes[:len(loss_keys)], loss_keys.items()):
+loss_axes = axes[:, :4].flatten()  # 2行4列=8个
+for ax, (key, title) in zip(loss_axes, loss_keys.items()):
     for (exp, label), color in zip(exp_labels.items(), palette):
         data = pd.read_csv(f"runs/train/{exp}/results.csv")
         if key not in data.columns:
@@ -64,7 +64,8 @@ for ax, (key, title) in zip(axes[:len(loss_keys)], loss_keys.items()):
     ax.spines["right"].set_visible(False)
 
 # ---- 后2列（4个子图）画 Metrics ----
-for ax, (key, title) in zip(axes[len(loss_keys):], metric_keys.items()):
+metric_axes = axes[:, 4:].flatten()  # 2行2列=4个    
+for ax, (key, title) in zip(metric_axes, metric_keys.items()):
     for (exp, label), color in zip(exp_labels.items(), palette):
         data = pd.read_csv(f"runs/train/{exp}/results.csv")
         if key not in data.columns:
@@ -79,9 +80,9 @@ for ax, (key, title) in zip(axes[len(loss_keys):], metric_keys.items()):
     ax.spines["right"].set_visible(False)
 
 # ---- 统一图例 ----
-handles, labels = axes[0].get_legend_handles_labels()
-fig.legend(handles, labels, loc="upper center", ncol=2, frameon=False, fontsize=14)
+handles, labels = loss_axes[0].get_legend_handles_labels()
+fig.legend(handles, labels, loc="lower center", ncol=3, frameon=False, fontsize=14)
 
-plt.tight_layout(rect=[0, 0, 1, 0.95])
+plt.tight_layout(rect=[0, 0.05, 1, 0.95])
 plt.savefig("overall_curve.png", dpi=300, bbox_inches="tight")
 print(f"保存成功: {pwd}/overall_curve.png")
