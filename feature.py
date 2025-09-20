@@ -36,18 +36,11 @@ def extract_features(weight_path, img_dir, local_layers, global_layers):
 
     return fea_local, fea_global
 
-def tsne_compare(features_dict, title, save_path,pca_dim=20):
+def tsne_compare(features_dict, title, ax, pca_dim=100): # save_path, 
     """
     features_dict: { "modelA": feats, "modelB": feats, ... }
     """
     all_features_list, all_labels = [], []
-
-    # for feat in features_list:
-    #     # print(feat.shape)
-    #     if feat.ndim == 1:
-    #         feat = feat.unsqueeze(0)  # [C] -> [1, C]
-    #         all_features.append(feat.detach().cpu().numpy())
-    
     for label, feats in features_dict.items():
         if isinstance(feats, (list, tuple)):
             # 每个元素应是单张图的 1D tensor，使用 stack 得到 (N, D)
@@ -113,19 +106,27 @@ def tsne_compare(features_dict, title, save_path,pca_dim=20):
         vis = tsne.fit_transform(all_reduced)
         print("t-SNE done, shape:", vis.shape)
 
-    # 绘图：每个模型一种颜色
-    plt.figure(figsize=(8, 6))
-    labels_unique = list(dict.fromkeys(all_labels))  # 保持顺序
+    # # 绘图：每个模型一种颜色
+    # plt.figure(figsize=(8, 6))
+    # labels_unique = list(dict.fromkeys(all_labels))  # 保持顺序
+    # cmap = cm.get_cmap('tab10', len(labels_unique))
+    # for i, lab in enumerate(labels_unique):
+    #     idx = [j for j, l in enumerate(all_labels) if l == lab]
+    #     plt.scatter(vis[idx, 0], vis[idx, 1], label=lab, alpha=0.7, s=20, color=cmap(i))
+    # plt.legend()
+    # plt.title(title)
+    # os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    # plt.savefig(save_path, dpi=300)
+    # # plt.close()
+    # print(f"[保存成功] {save_path}")
+
+    # 绘制到指定子图 ax
+    labels_unique = list(dict.fromkeys(all_labels))
     cmap = cm.get_cmap('tab10', len(labels_unique))
     for i, lab in enumerate(labels_unique):
         idx = [j for j, l in enumerate(all_labels) if l == lab]
-        plt.scatter(vis[idx, 0], vis[idx, 1], label=lab, alpha=0.7, s=20, color=cmap(i))
-    plt.legend()
-    plt.title(title)
-    os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    plt.savefig(save_path, dpi=300)
-    plt.close()
-    print(f"[保存成功] {save_path}")
+        ax.scatter(vis[idx, 0], vis[idx, 1], label=lab, alpha=0.7, s=20, color=cmap(i))
+    ax.set_title(title)
 
    
 
@@ -138,11 +139,10 @@ if __name__ == "__main__":
     local_layers = [2, 4, 6, 8, 9]
     global_layers = [10]
 
-
     # 两个不同权重
     weight_paths = {
-        "Baseline": "runs/train/exp2/weights/best.pt",
-        "Ours": "runs/train/exp4/weights/best.pt"
+        "YOLO11": "runs/train/exp2/weights/best.pt",
+        "MFCONet": "runs/train/exp4/weights/best.pt"
     }
 
     features_local = {}
@@ -154,24 +154,24 @@ if __name__ == "__main__":
         features_global[name] = fea_global
 
 
-    # # 多个不同权重
-    # weight_paths = [
-    #     "runs/train/exp2/weights/best.pt",
-    #     # "runs/train/exp4/weights/best.pt"
-    # ]
-    # features_local = {}
-    # features_global = {}
-    # for w in weight_paths:
-    #     fea_local, fea_global = extract_features(w, img_dir, local_layers, global_layers)
-    #     print(len(fea_local)) # 样本数
-    #     print(len(fea_global))
-    #     # model_name = os.path.basename(w).replace(".pt", "")
-    #     # features_local[model_name] = fea_local
-    #     # features_global[model_name] = fea_global
-    #     # print(features_local)
+    # # # 局部特征对比
+    # tsne_compare(features_local, "Local Features Across Models", "/home/lenovo/data/liujiaji/powerGit/mvod/features/tsne_local.png")
+    # # # 全局特征对比
+    # tsne_compare(features_global, "Global Features Across Models", "/home/lenovo/data/liujiaji/powerGit/mvod/features/tsne_global.png")
 
-    # # 局部特征对比
-    tsne_compare(features_local, "t-SNE Local Features Across Models", "/home/lenovo/data/liujiaji/powerGit/mvod/features/tsne_local.png")
+    # 创建一张大图，左右子图
+    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
 
-    # # 全局特征对比
-    tsne_compare(features_global, "t-SNE Global Features Across Models", "/home/lenovo/data/liujiaji/powerGit/mvod/features/tsne_global.png")
+    tsne_compare(features_local, "Local Features Across Models", axes[0])
+    tsne_compare(features_global, "Global Features Across Models", axes[1])
+
+    axes[0].legend()
+    axes[1].legend()
+
+    save_path = "/home/lenovo/data/liujiaji/powerGit/mvod/features/tsne_local_global.png"
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    plt.savefig(save_path, dpi=300)
+    plt.close()
+    print(f"[保存成功] {save_path}")
+
+
