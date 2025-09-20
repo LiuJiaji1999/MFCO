@@ -160,17 +160,17 @@ if __name__ == "__main__":
     # tsne_compare(features_global, "Global Features Across Models", "/home/lenovo/data/liujiaji/powerGit/mvod/features/tsne_global.png")
 
     # 创建一张大图，左右子图
-    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+    fig, axes = plt.subplots(1, 2, figsize=(16, 6), constrained_layout=True)
 
-    tsne_compare(features_local, "Local Features Across Models", axes[0])
-    tsne_compare(features_global, "Global Features Across Models", axes[1])
+    tsne_compare(features_local, "Local Features", axes[1])
+    tsne_compare(features_global, "Global Features", axes[0])
 
     axes[0].legend()
     axes[1].legend()
 
     save_path = "/home/lenovo/data/liujiaji/powerGit/mvod/features/tsne_local_global.png"
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    plt.savefig(save_path, dpi=300)
+    plt.savefig(save_path, dpi=300,bbox_inches="tight")
     plt.close()
     print(f"[保存成功] {save_path}")
 
