@@ -84,5 +84,5 @@ handles, labels = loss_axes[0].get_legend_handles_labels()
 fig.legend(handles, labels, loc="lower center", ncol=3, frameon=False, fontsize=14)
 
 plt.tight_layout(rect=[0, 0.05, 1, 0.95])
-plt.savefig("overall_curve.png", dpi=300, bbox_inches="tight")
-print(f"保存成功: {pwd}/overall_curve.png")
+plt.savefig("/home/lenovo/data/liujiaji/powerGit/mvod/overall_curve.png", dpi=300, bbox_inches="tight")
+print(f"保存成功: /home/lenovo/data/liujiaji/powerGit/mvod/overall_curve.png")
