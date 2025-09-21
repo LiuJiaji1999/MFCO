@@ -142,6 +142,7 @@ if __name__ == "__main__":
     # 两个不同权重
     weight_paths = {
         "YOLO11": "runs/train/exp2/weights/best.pt",
+        "MV-YOLO11": "runs/train/exp3/weights/best.pt",
         "MFCONet": "runs/train/exp4/weights/best.pt"
     }
 
