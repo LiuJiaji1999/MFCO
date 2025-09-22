@@ -74,7 +74,7 @@ model: rtdetr-l.yaml
 datasets: Private Power Data, Public Power Data, VisDrone2019-DET
 (640, 640)+ours: CUDA out of Memory
 ```
-| Method | pin-un | pin-ru | pin-de | Insulator-bu | Insulator-de | Insulator-di | mAP(%) |
+| Method | pin-un | pin-ru | pin-de | insulator-bu | insulator-de | insulator-di | mAP(%) |
 |---|---|---|---|---|---|---|---|
 | (640,640) | 22.3| 67.3 |48.0  |71.5  |69.0  |29.9  | 51.3 |
 | (640,640)+ours | -| - |-  |-  |- | - | - |
@@ -89,7 +89,7 @@ datasets: Private Power Data, Public Power Data, VisDrone2019-DET
 | (384,384)+ours | 99.5 | 99.7 | 88.4 | 94.5 | 92.8 |
 
 
-| Method | Ign-reg | ped | peo | bic | car | van | tru | tri | aw-tri | bus | mAP (%) |
+| Method | ign-reg | ped | peo | bic | car | van | tru | tri | aw-tri | bus | mAP (%) |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | (640, 640) | 38.9 | 28.0 | 14.9 | 79.1 | 41.3 | 46.2 | 28.5 | 18.7 | 56.8 | 42.7 | 39.5 |
 | (640,640)+ours | - | - | - | - | - | - | - | - | - | - | - |
@@ -108,9 +108,10 @@ Thanks again to the sprirt of the open-source:https://github.com/stars/LiuJiaji1
 2. test_yaml.py ：test all yaml is run 
 3. heatmap.py ：heatmap
 4. get_FPS.py ：compute model param、inference-time、FPS
-5. plot_result.py：visualize compare
-6. get_model_erf.py ： erf
-7. test_other.py ： debug
+5. get_model_erf.py ： erf
+6. test_other.py ： debug
+7. plot_result.py：visualize loss and metrics
+8. feature.py：visualize feature distributions
 ```
 
 <details >
