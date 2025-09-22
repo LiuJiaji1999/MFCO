@@ -2,7 +2,7 @@
 ## Multi-View Object Detection
 
 ## 💡Introduction
-This is our PyTorch implementation of the paper "[`Multi-view Feature Collaborative Optimization Network for Object Detection`].
+This is our PyTorch implementation of the paper "[`Multi-view Feature Collaborative Optimization Network for UAV Images Object Detection`].
 
 <div align="center">
     <img src="MFCONet.png" width="1000" alt="MFCONet">
@@ -18,7 +18,7 @@ This is our PyTorch implementation of the paper "[`Multi-view Feature Collaborat
     # VPMBGI: https://github.com/phd-benel/VPMBGI
 /dataset/VisDrone.yaml:VisDrone2019 
     # https://github.com/VisDrone/VisDrone-Dataset
-other...
+other
 ```
 
 ## 🛠️Quick Start Examples
@@ -62,11 +62,12 @@ nohup python train.py > /log/XXX.log 2>&1 & tail -f /log/XXX.log
 Since github cannot push big file, we put '.pt' into the Google Drive,so you can directly test :
 # https://drive.google.com/drive/folders/1SSlZEZvlthQqWaZFEPYCWwkEe-40fqsX
 python val.py # test dataset 
-python detect.py # visualize
+python detect.py # Visualization of detect results
+nohup python feature.py > /home/lenovo/data/liujiaji/powerGit/mvod/log/feature.log 2>&1 & tail -f /home/lenovo/data/liujiaji/powerGit/mvod/log/feature.log 
 ```
 </details>
 
-#### 📝RTDETR result
+#### 📝RT-DETR result
 ```bash
 /rtdetr
 model: rtdetr-l.yaml
