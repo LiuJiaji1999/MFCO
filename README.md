@@ -105,12 +105,12 @@ Thanks again to the sprirt of the open-source:https://github.com/stars/LiuJiaji1
 #### 🌟Explanation of the file
 ```bash
 1. main_profile.py ：model.info
-2. test_yaml.py：test all yaml is run 
+2. test_yaml.py ：test all yaml is run 
 3. heatmap.py ：heatmap
 4. get_FPS.py ：compute model param、inference-time、FPS
 5. plot_result.py：visualize compare
 6. get_model_erf.py ： erf
-7. test_other.py: debug
+7. test_other.py ： debug
 ```
 
 <details >
