@@ -5,7 +5,7 @@
 This is our PyTorch implementation of the paper "[`Multi-view Feature Collaborative Optimization Network for UAV Images Object Detection`].
 
 <div align="center">
-    <img src="MFCONet.png" width="1000" alt="MFCONet">
+    <img src="MFCO-YOLO.png" width="1000" alt="MFCO-YOLO">
 </div>
 
 ## 🚩Dataset
@@ -16,7 +16,7 @@ This is our PyTorch implementation of the paper "[`Multi-view Feature Collaborat
     # CPLID: https://github.com/InsulatorData/InsulatorDataSet
     # IDID: https://ieee-dataport.org/competitions/insulator-defect-detection
     # VPMBGI: https://github.com/phd-benel/VPMBGI
-/dataset/VisDrone.yaml:VisDrone2019 
+/dataset/VisDrone.yaml:VisDrone2019-DET 
     # https://github.com/VisDrone/VisDrone-Dataset
 other
 ```
@@ -32,7 +32,7 @@ conda activate DA #debug
 conda activate ObjectDetection #train
 
 # clone the project and configure the environment.
-git clone https://github.com/LiuJiaji1999/HFDNet.git
+git clone https://github.com/LiuJiaji1999/MFCO.git
 # the version of ultralytics is '8.3.9'           
 # GPU-NVIDIA GeForce RTX 3090 
 # CPU-12th Gen Intel(R) Core(TM) i9-12900
