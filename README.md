@@ -10,9 +10,9 @@ This is our PyTorch implementation of the paper "[`A multi-view feature collabor
 
 ## 🚩Dataset
 ```bash
-/dataset/powerdata.yaml: Private power data 
+/dataset/powerdata.yaml: Private Power Data 
     # Due to the signing of a confidentiality agreement, this dataset is not publicly available at this time.
-/dataset/publicallpower.yaml: Public power data
+/dataset/publicallpower.yaml: Public Power Data
     # CPLID: https://github.com/InsulatorData/InsulatorDataSet
     # IDID: https://ieee-dataport.org/competitions/insulator-defect-detection
     # VPMBGI: https://github.com/phd-benel/VPMBGI
