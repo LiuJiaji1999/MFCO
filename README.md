@@ -2,10 +2,10 @@
 ## Multi-View Object Detection
 
 ## 💡Introduction
-This is our PyTorch implementation of the paper "[`Multi-view Feature Collaborative Optimization Network for UAV Images Object Detection`].
+This is our PyTorch implementation of the paper "[`A multi-view feature collaborative optimization method for object detection`].
 
 <div align="center">
-    <img src="MFCO-YOLO.png" width="1000" alt="MFCO-YOLO">
+    <img src="MFCO.png" width="1000" alt="MFCO">
 </div>
 
 ## 🚩Dataset
@@ -111,7 +111,8 @@ Thanks again to the sprirt of the open-source:https://github.com/stars/LiuJiaji1
 5. get_model_erf.py ： erf
 6. test_other.py ： debug
 7. plot_result.py：visualize loss and metrics
-8. feature.py：visualize feature distributions
+8. plot_all.py:visualize loss and metrics in one picture
+9. feature.py：visualize feature distributions
 ```
 
 <details >
