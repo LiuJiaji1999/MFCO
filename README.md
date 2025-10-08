@@ -34,8 +34,8 @@ conda activate ObjectDetection #train
 # clone the project and configure the environment.
 git clone https://github.com/LiuJiaji1999/MFCO.git
 # the version of ultralytics is '8.3.9'           
-# GPU-NVIDIA GeForce RTX 3090 
-# CPU-12th Gen Intel(R) Core(TM) i9-12900
+# GPU - 24G NVIDIA GeForce RTX 3090 
+# CPU - 12th Gen Intel(R) Core(TM) i9-12900
 python: 3.8.18
 torch:  1.12.0+cu113
 torchvision: 0.13.0+cu113 
@@ -98,8 +98,8 @@ datasets: Private Power Data, Public Power Data, VisDrone2019-DET
 
 #### 📢Plan
 ```bash
-We will modify network to the Camouflaged/Salient Object Detection,enabling fair comparison with other methods.
-Thanks again to the sprirt of the open-source:https://github.com/stars/LiuJiaji1999/lists/mvod
+We will modify network to the Camouflaged/Salient Object Detection,enabling fair comparison with other MVOD methods.
+And thanks again to the sprirt of the open-source:https://github.com/stars/LiuJiaji1999/lists/mvod
 ```
 
 #### 🌟Explanation of the file
