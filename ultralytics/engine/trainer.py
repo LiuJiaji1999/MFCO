@@ -411,8 +411,11 @@ class BaseTrainer:
                     
                     # 多视角增强
                     batch_v = generate_multiview_batch(batch,visualize=False)
-                    # self.loss, self.loss_items = self.model(batch_v)
-                    
+                    # 仅 MV,记得去 ultralytics/models/yolo/detect/train.py 改为原3loss
+                    self.loss, self.loss_items = self.model(batch_v)
+
+                    ### MV+GL
+                    '''
                     global_loss = 0.0
                     local_loss = 0.0
                     B = batch_v['img'].shape[0] // 6
@@ -477,16 +480,16 @@ class BaseTrainer:
                             # # 损失定义为 "过高相似度的惩罚"
                             # local_loss = local_loss + local_complement
 
-
                     self.det_loss, self.det_loss_items = self.model(batch_v)
-                    
-
+                 
+                    # gl-loss
                     self.loss = self.det_loss + global_loss + local_loss
                     self.loss_items = torch.cat([
                         self.det_loss_items,  # 原有的 cls、bbox、dfl 损失
                         global_loss.detach().unsqueeze(0),
                         local_loss.detach().unsqueeze(0)
                     ])
+                    '''
 
                     if RANK != -1:
                         self.loss *= world_size
