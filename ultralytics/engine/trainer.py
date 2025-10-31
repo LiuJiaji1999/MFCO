@@ -412,10 +412,10 @@ class BaseTrainer:
                     # 多视角增强
                     batch_v = generate_multiview_batch(batch,visualize=False)
                     # 仅 MV,记得去 ultralytics/models/yolo/detect/train.py 改为原3loss
-                    # self.loss, self.loss_items = self.model(batch_v)
+                    self.loss, self.loss_items = self.model(batch_v)
 
                     ### MV+GL
-                    
+                    '''
                     global_loss = 0.0
                     local_loss = 0.0
                     B = batch_v['img'].shape[0] // 6
@@ -423,12 +423,10 @@ class BaseTrainer:
                     self.backbone_feature_dict = self.model(batch_v['img'],layers=True)
                     # batch_v['img'].shape = torch.Size([12, 3, 640, 640])  B*6v
                     # self.golbal_feature_dict[2].shape = torch.Size([12, 256, 160, 160])
-                    
                     for layer in [2, 4, 6, 8, 9, 10]:
                         feas = self.backbone_feature_dict[layer]
                         if feas is None:
                             continue
-
                         if layer in [10]: 
                             # 全局一致性损失
                             # -------------------
@@ -444,7 +442,6 @@ class BaseTrainer:
                             global_consistency = sim_matrix.sum() / (B * V * (V - 1))
                             # 5. 损失定义为 1 - 平均相似度
                             global_loss = global_loss + (1 - global_consistency)
-
                         if layer in [2, 4, 6, 8, 9]: 
                             # -------------------
                             # 局部互补性损失
@@ -467,7 +464,6 @@ class BaseTrainer:
                                 loss_p = sim_matrix.mean()
                                 patch_loss = patch_loss + loss_p
                             local_loss = local_loss + patch_loss / patches.size(2)   # 平均不同 patch 的约束
-
                             # # (c) 计算不同视角下 patch 相似度
                             # 目前在 patch 维度做平均 → 相当于只约束“整体局部特征”。
                             # # 先按 patch 取均值，再计算余弦相似度
@@ -481,7 +477,6 @@ class BaseTrainer:
                             # local_loss = local_loss + local_complement
 
                     self.det_loss, self.det_loss_items = self.model(batch_v)
-                 
                     # gl-loss
                     self.loss = self.det_loss + global_loss + local_loss
                     self.loss_items = torch.cat([
@@ -490,7 +485,7 @@ class BaseTrainer:
                         local_loss.detach().unsqueeze(0)
                     ])
                     
-
+                    '''
                     if RANK != -1:
                         self.loss *= world_size
                     self.tloss = (
