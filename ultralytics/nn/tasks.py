@@ -202,7 +202,7 @@ class BaseModel(nn.Module):
                 if m.i in [2, 4, 6, 8, 9, 10]:  # 判断层数是否属于 [2, 4, 6, 8, 9, 10, 13, 16, 19, 22] 
                     # print(f'Saving features at stage {m.i}')
                     out_feas_dict[m.i] = m(x)  # 保存当前层的特征图
-                if m.i == 19: # 原yolo11.yaml为23，最后一层层数。
+                if m.i == 23: # 原yolo11.yaml为23，最后一层层数。
                     return out_feas_dict
                     
             if hasattr(m, 'backbone'):
