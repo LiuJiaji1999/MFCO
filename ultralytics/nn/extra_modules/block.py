@@ -93,7 +93,8 @@ __all__ = ['DyHeadBlock', 'DyHeadBlockWithDCNV3', 'Fusion', 'C3k2_Faster', 'C3k2
            'CSP_MSCB_SC', 'EUCB_SC', 'C3k2_FAT', 'A2C2f_FMFFN', 'A2C2f_FMFFN_DYT', 'C3k2_LEGM', 'C3k2_RCB', 'LoGStem', 'C3k2_LFEM', 'C3k2_SBSM', 'A2C2f_SEFN', 'A2C2f_Mona', 'C3k2_LSBlock', 'C3k2_MambaOut_LSConv', 'A2C2f_DFFN_DYT_Mona', 'C3k2_TransMamba', 'A2C2f_SEFFN', 'C3k2_EVS',
            'A2C2f_EDFFN', 'C3k2_EBlock', 'C3k2_DBlock', 'C3k2_FDConv', 'C3k2_MambaOut_FDConv', 'C3k2_PFDConv', 'C3k2_PFDConv', 'C3k2_FasterFD', 'C3k2_DSAN', 'C3k2_MambaOut_DSA', 'C3k2_DSA', 'C3k2_DSAN_EDFFN', 'C3k2_RMB', 'SNI', 'GSConvE', 'C3k2_SFSConv', 'C3k2_MambaOut_SFSC',
            'C3k2_MambaOut_SFSC', 'C3k2_PSFSConv', 'C3k2_FasterSFSC', 'FCM', 'FCM_1', 'FCM_2', 'FCM_3', 'Pzconv', 'C3k2_GroupMamba', 'C3k2_GroupMambaBlock', 'C3k2_MambaVision', 'C3k2_wConv', 'wConv2d', 'PST', 'C3k2_FourierConv', 'FourierConv', 'C3k2_GLVSS', 'C3k2_ESC', 'C3k2_MBRConv5',
-           'C3k2_MBRConv3', 'C3k2_VSSD', 'C3k2_TVIM', 'DPCF', 'C3k2_CSI'
+           'C3k2_MBRConv3', 'C3k2_VSSD', 'C3k2_TVIM', 'DPCF', 'C3k2_CSI',
+           'MVAF','LCFM','CVFI' # multi-view
            ]
 
 def autopad(k, p=None, d=1):  # kernel, padding, dilation
@@ -15121,3 +15122,198 @@ class C3k2_CSI(C3k2):
         self.m = nn.ModuleList(C3k_CSI(self.c, self.c, 2, shortcut, g) if c3k else CSI(self.c) for _ in range(n))
 
 ######################################## INFFUS2025 SAMamba end ########################################
+        
+######################################## multi-view start######################################## 
+
+# -----------------------------
+# Auxiliary blocks: SE, CBAM
+# -----------------------------
+class SEBlock(nn.Module):
+    def __init__(self, channels, r=16):
+        super().__init__()
+        self.avgpool = nn.AdaptiveAvgPool2d(1)
+        self.fc = nn.Sequential(
+            nn.Linear(channels, channels // r, bias=False),
+            nn.ReLU(inplace=True),
+            nn.Linear(channels // r, channels, bias=False),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        b, c, _, _ = x.shape
+        y = self.avgpool(x).view(b, c)
+        y = self.fc(y).view(b, c, 1, 1)
+        return x * y
+
+
+class CBAM(nn.Module):
+    def __init__(self, channels, reduction=16, kernel=7):
+        super().__init__()
+        self.channel_att = nn.Sequential(
+            nn.AdaptiveAvgPool2d(1),
+            nn.Conv2d(channels, channels // reduction, 1, bias=True),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(channels // reduction, channels, 1, bias=True),
+            nn.Sigmoid()
+        )
+        self.spatial_att = nn.Sequential(
+            nn.Conv2d(2, 1, kernel_size=kernel, stride=1, padding=kernel//2, bias=False),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        # channel
+        avg = torch.mean(x, dim=(2,3), keepdim=True)
+        ch = self.channel_att(avg)
+        x = x * ch
+        # spatial
+        avg_pool = torch.mean(x, dim=1, keepdim=True)
+        max_pool, _ = torch.max(x, dim=1, keepdim=True)
+        cat = torch.cat([avg_pool, max_pool], dim=1)
+        sp = self.spatial_att(cat)
+        x = x * sp
+        return x
+
+# -----------------------------
+# MVAF: 高层多视角自适应融合模块 (替换SPPF)
+# -----------------------------
+class MVAF(nn.Module):
+    """
+    Multi-View Adaptive Fusion (MVAF)
+    - 作为高层语义融合模块，替换SPPF位置。
+    - 输入: feat (B, C, H, W)
+    - 通过多尺度 conv + SE + 可学习通道权重实现自适应融合。
+    """
+    def __init__(self, channels: int, pool_size: int = 5):
+        super().__init__()
+        self.channels = channels
+        # 多尺度 convs like SPP but with adaptiveness
+        self.conv1 = nn.Conv2d(channels, channels, kernel_size=1, stride=1, padding=0, bias=False)
+        self.conv3 = nn.Conv2d(channels, channels, kernel_size=3, stride=1, padding=1, bias=False)
+        self.conv5 = nn.Conv2d(channels, channels, kernel_size=5, stride=1, padding=2, bias=False)
+        self.bn = nn.BatchNorm2d(channels)
+        self.act = nn.SiLU()
+        # channel weighting
+        self.se = SEBlock(channels, r=16)
+        # 可学习的通道融合权重（softmax）
+        self.scale_weights = nn.Parameter(torch.ones(3, channels), requires_grad=True)
+
+        # optional: light residual conv
+        self.res_conv = nn.Conv2d(channels, channels, kernel_size=1, bias=False)
+
+    def forward(self, x):
+        # multi-scale features
+        f1 = self.conv1(x)
+        f3 = self.conv3(x)
+        f5 = self.conv5(x)
+
+        # normalize channel-wise weights
+        w = F.softmax(self.scale_weights, dim=0)  # (3, C)
+        # apply weighting per channel: expand dims
+        b, c, h, w_h = f1.shape
+        # shape transform
+        f_stack = torch.stack([f1, f3, f5], dim=0)  # [3, B, C, H, W]
+        # apply per-channel weighting (broadcast)
+        # w: [3, C] -> [3, 1, C, 1, 1]
+        w_exp = w.view(3, 1, c, 1, 1)
+        fused = (f_stack * w_exp).sum(dim=0)  # [B, C, H, W]
+
+        fused = self.bn(fused)
+        fused = self.act(fused)
+        fused = self.se(fused)
+        fused = fused + self.res_conv(x)
+        return fused
+
+# -----------------------------
+# LCFM: 局部互补性融合模块（轻量化自注意力）
+# -----------------------------
+class LCFM(nn.Module):
+    """
+    Local Complementarity Fusion Module
+    - 用于代替 Concat 后的直接 conv，用于两个或多个特征图之间的交互。
+    - 支持两个张量输入：x (target resolution), y (skip/resolution from backbone/head)
+    - 内部实现了轻量化的跨特征自注意力（multi-head attention 的简化版）。
+    """
+    def __init__(self, channels: int, num_heads: int = 4, reduction: int = 2):
+        super().__init__()
+        self.channels = channels
+        self.num_heads = num_heads
+        hidden = max(8, channels // reduction)
+        # projection
+        self.proj_q = nn.Conv2d(channels, channels, 1, bias=False)
+        self.proj_k = nn.Conv2d(channels, channels, 1, bias=False)
+        self.proj_v = nn.Conv2d(channels, channels, 1, bias=False)
+        self.attn_out = nn.Conv2d(channels, channels, 1, bias=False)
+        self.norm = nn.BatchNorm2d(channels)
+        self.act = nn.SiLU()
+        # gating for residual combination
+        self.gate = nn.Sequential(
+            nn.AdaptiveAvgPool2d(1),
+            nn.Conv2d(channels, channels//4, 1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(channels//4, channels, 1),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x, y=None):
+        """
+        If y is provided (e.g., concat child), use cross-attention from y->x; otherwise apply self-attention on x.
+        x: [B, C, H, W]
+        y: [B, C, H, W] or None
+        """
+        B, C, H, W = x.shape
+        q = self.proj_q(x).reshape(B, C, -1).permute(0, 2, 1)  # [B, N, C]
+        if y is None:
+            k = self.proj_k(x).reshape(B, C, -1).permute(0, 2, 1)
+            v = self.proj_v(x).reshape(B, C, -1).permute(0, 2, 1)
+        else:
+            k = self.proj_k(y).reshape(B, C, -1).permute(0, 2, 1)
+            v = self.proj_v(y).reshape(B, C, -1).permute(0, 2, 1)
+        # scaled dot-product
+        attn = torch.bmm(q, k.transpose(1,2)) / (C**0.5)  # [B, N, N]
+        attn = F.softmax(attn, dim=-1)
+        out = torch.bmm(attn, v)  # [B, N, C]
+        out = out.permute(0, 2, 1).reshape(B, C, H, W)
+        out = self.attn_out(out)
+        out = self.norm(out)
+        out = self.act(out)
+        # gated residual
+        g = self.gate(out)
+        out = x + g * out
+        return out
+
+# -----------------------------
+# CVFI: Cross-View Feature Interaction (高层一致性模块)
+# -----------------------------
+class CVFI(nn.Module):
+    """
+    Cross-View Feature Interaction
+    - 采用 CBAM + 通道自适应融合，用于高层语义的一致性增强
+    - 输入: feat (B, C, H, W)
+    - 输出: feat (B, C, H, W)
+    """
+    def __init__(self, channels: int):
+        super().__init__()
+        self.reduce = nn.Conv2d(channels, channels, 1, bias=False)
+        self.cbam = CBAM(channels, reduction=16)
+        self.se = SEBlock(channels, r=16)
+        # small MLP to learn residual scaling
+        self.mlp = nn.Sequential(
+            nn.AdaptiveAvgPool2d(1),
+            nn.Flatten(),
+            nn.Linear(channels, channels//4),
+            nn.ReLU(inplace=True),
+            nn.Linear(channels//4, channels),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        r = self.reduce(x)
+        r = self.cbam(r)
+        r = self.se(r)
+        scale = self.mlp(x).view(x.size(0), x.size(1), 1, 1)
+        out = x + r * scale
+        return out
+
+######################################## multi-view end ######################################## 
+

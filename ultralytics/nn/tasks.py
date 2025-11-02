@@ -1163,7 +1163,8 @@ def parse_model(d, ch, verbose=True, warehouse_manager=None):  # model_dict, inp
             SPPF_LSKA, CSP_EDLAN, nn.Conv2d, HWD, RepNCSPELAN4, DBBNCSPELAN4, OREPANCSPELAN4, DRBNCSPELAN4, RepNCSPELAN4_CAA, V7DownSampling,
             DGCST, RepNCSPELAN4_CAA, SRFD, DRFD, RGCSPELAN, CSP_PTB, SimpleStem, VisionClueMerge, VSSBlock_YOLO, XSSBlock, GLSA, FeaturePyramidSharedConv,
             LDConv, CSP_MSCB, CSP_PMSFA, RFAConv, RFCBAMConv, RFCAConv, CSP_FreqSpatial, MANet, MANet_FasterBlock, MANet_FasterCGLU, 
-            MANet_Star, PSConv, RepHMS, CSP_MSCB_SC, LoGStem, GSConvE, DSConv_YOLO13, wConv2d, FourierConv
+            MANet_Star, PSConv, RepHMS, CSP_MSCB_SC, LoGStem, GSConvE, DSConv_YOLO13, wConv2d, FourierConv,
+            MVAF # multi-view
         ) + C3K2_CLASS + A2C2F_CLASS + C2PSA_CLASS):
             if args[0] == 'head_channel':
                 args[0] = d[args[0]]
@@ -1220,7 +1221,7 @@ def parse_model(d, ch, verbose=True, warehouse_manager=None):  # model_dict, inp
             c2 = args[1] if args[3] else args[1] * 4
         elif m is nn.BatchNorm2d:
             args = [ch[f]]
-        elif m is Concat:
+        elif m in [Concat, LCFM, CVFI]: #multi-view
             c2 = sum(ch[x] for x in f)
         elif m in ((WorldDetect, ImagePoolingAttn) + DETECT_CLASS + V10_DETECT_CLASS + SEGMENT_CLASS + POSE_CLASS + OBB_CLASS):
             args.append([ch[x] for x in f])
