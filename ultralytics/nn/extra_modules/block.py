@@ -15129,13 +15129,13 @@ class C3k2_CSI(C3k2):
 # Auxiliary blocks: SE, CBAM
 # -----------------------------
 class SEBlock(nn.Module):
-    def __init__(self, channels, r=16):
+    def __init__(self, c1, r=16):
         super().__init__()
         self.avgpool = nn.AdaptiveAvgPool2d(1)
         self.fc = nn.Sequential(
-            nn.Linear(channels, channels // r, bias=False),
+            nn.Linear(c1, c1 // r, bias=False),
             nn.ReLU(inplace=True),
-            nn.Linear(channels // r, channels, bias=False),
+            nn.Linear(c1 // r, c1, bias=False),
             nn.Sigmoid()
         )
 
@@ -15147,13 +15147,13 @@ class SEBlock(nn.Module):
 
 
 class CBAM(nn.Module):
-    def __init__(self, channels, reduction=16, kernel=7):
+    def __init__(self, c1, reduction=16, kernel=7):
         super().__init__()
         self.channel_att = nn.Sequential(
             nn.AdaptiveAvgPool2d(1),
-            nn.Conv2d(channels, channels // reduction, 1, bias=True),
+            nn.Conv2d(c1, c1 // reduction, 1, bias=True),
             nn.ReLU(inplace=True),
-            nn.Conv2d(channels // reduction, channels, 1, bias=True),
+            nn.Conv2d(c1 // reduction, c1, 1, bias=True),
             nn.Sigmoid()
         )
         self.spatial_att = nn.Sequential(
@@ -15184,45 +15184,41 @@ class MVAF(nn.Module):
     - 输入: feat (B, C, H, W)
     - 通过多尺度 conv + SE + 可学习通道权重实现自适应融合。
     """
-    def __init__(self, channels: int, pool_size: int = 5):
+    def __init__(self, c1, c2, k=5):
         super().__init__()
-        self.channels = channels
-        # 多尺度 convs like SPP but with adaptiveness
-        self.conv1 = nn.Conv2d(channels, channels, kernel_size=1, stride=1, padding=0, bias=False)
-        self.conv3 = nn.Conv2d(channels, channels, kernel_size=3, stride=1, padding=1, bias=False)
-        self.conv5 = nn.Conv2d(channels, channels, kernel_size=5, stride=1, padding=2, bias=False)
-        self.bn = nn.BatchNorm2d(channels)
+        if c2 is None:
+            c2 = c1
+        self.c1, self.c2 = c1, c2
+        c_hidden = max(c1 // 2, 64)
+        # 多尺度卷积
+        self.conv1 = nn.Conv2d(c1, c_hidden, kernel_size=1, padding=0, bias=False)
+        self.conv3 = nn.Conv2d(c1, c_hidden, kernel_size=3, padding=1, bias=False)
+        self.conv5 = nn.Conv2d(c1, c_hidden, kernel_size=5, padding=2, bias=False)
+        # 通道融合
+        self.bn = nn.BatchNorm2d(c_hidden)
         self.act = nn.SiLU()
-        # channel weighting
-        self.se = SEBlock(channels, r=16)
-        # 可学习的通道融合权重（softmax）
-        self.scale_weights = nn.Parameter(torch.ones(3, channels), requires_grad=True)
-
-        # optional: light residual conv
-        self.res_conv = nn.Conv2d(channels, channels, kernel_size=1, bias=False)
-
+        self.se = SEBlock(c_hidden, r=16)
+        # 输出调整层
+        self.out_conv = nn.Conv2d(c_hidden, c2, kernel_size=1, bias=False)
+        self.res_conv = nn.Conv2d(c1, c2, kernel_size=1, bias=False)
+        # 可学习的多尺度融合权重
+        self.scale_weights = nn.Parameter(torch.ones(3, c_hidden), requires_grad=True)
+    
     def forward(self, x):
         # multi-scale features
         f1 = self.conv1(x)
         f3 = self.conv3(x)
         f5 = self.conv5(x)
 
-        # normalize channel-wise weights
-        w = F.softmax(self.scale_weights, dim=0)  # (3, C)
-        # apply weighting per channel: expand dims
-        b, c, h, w_h = f1.shape
-        # shape transform
-        f_stack = torch.stack([f1, f3, f5], dim=0)  # [3, B, C, H, W]
-        # apply per-channel weighting (broadcast)
-        # w: [3, C] -> [3, 1, C, 1, 1]
-        w_exp = w.view(3, 1, c, 1, 1)
-        fused = (f_stack * w_exp).sum(dim=0)  # [B, C, H, W]
+        w = F.softmax(self.scale_weights, dim=0).view(3, 1, -1, 1, 1)
+        f_stack = torch.stack([f1, f3, f5], dim=0)
+        fused = (f_stack * w).sum(dim=0)
 
         fused = self.bn(fused)
-        fused = self.act(fused)
-        fused = self.se(fused)
-        fused = fused + self.res_conv(x)
-        return fused
+        fused = self.act(self.se(fused))
+        fused = self.out_conv(fused)
+
+        return fused + self.res_conv(x)
 
 # -----------------------------
 # LCFM: 局部互补性融合模块（轻量化自注意力）
@@ -15234,53 +15230,61 @@ class LCFM(nn.Module):
     - 支持两个张量输入：x (target resolution), y (skip/resolution from backbone/head)
     - 内部实现了轻量化的跨特征自注意力（multi-head attention 的简化版）。
     """
-    def __init__(self, channels: int, num_heads: int = 4, reduction: int = 2):
+    def __init__(self, c1, c2):
         super().__init__()
-        self.channels = channels
-        self.num_heads = num_heads
-        hidden = max(8, channels // reduction)
-        # projection
-        self.proj_q = nn.Conv2d(channels, channels, 1, bias=False)
-        self.proj_k = nn.Conv2d(channels, channels, 1, bias=False)
-        self.proj_v = nn.Conv2d(channels, channels, 1, bias=False)
-        self.attn_out = nn.Conv2d(channels, channels, 1, bias=False)
-        self.norm = nn.BatchNorm2d(channels)
+        self.c2 = c2
+        self.norm = nn.BatchNorm2d(c2)
         self.act = nn.SiLU()
-        # gating for residual combination
-        self.gate = nn.Sequential(
-            nn.AdaptiveAvgPool2d(1),
-            nn.Conv2d(channels, channels//4, 1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(channels//4, channels, 1),
-            nn.Sigmoid()
-        )
+        self.attn_out = nn.Conv2d(c2, c2, 1, bias=False)
+        # 懒加载参数，在 forward 初始化时定义卷积层
+        self.q_proj = None
+        self.res_proj = None
 
-    def forward(self, x, y=None):
-        """
-        If y is provided (e.g., concat child), use cross-attention from y->x; otherwise apply self-attention on x.
-        x: [B, C, H, W]
-        y: [B, C, H, W] or None
-        """
-        B, C, H, W = x.shape
-        q = self.proj_q(x).reshape(B, C, -1).permute(0, 2, 1)  # [B, N, C]
-        if y is None:
-            k = self.proj_k(x).reshape(B, C, -1).permute(0, 2, 1)
-            v = self.proj_v(x).reshape(B, C, -1).permute(0, 2, 1)
-        else:
-            k = self.proj_k(y).reshape(B, C, -1).permute(0, 2, 1)
-            v = self.proj_v(y).reshape(B, C, -1).permute(0, 2, 1)
-        # scaled dot-product
-        attn = torch.bmm(q, k.transpose(1,2)) / (C**0.5)  # [B, N, N]
-        attn = F.softmax(attn, dim=-1)
-        out = torch.bmm(attn, v)  # [B, N, C]
-        out = out.permute(0, 2, 1).reshape(B, C, H, W)
-        out = self.attn_out(out)
-        out = self.norm(out)
-        out = self.act(out)
-        # gated residual
-        g = self.gate(out)
-        out = x + g * out
-        return out
+    def forward(self, x):
+            # 1.若输入为列表
+            if isinstance(x, (list, tuple)):
+                if len(x) == 2:
+                    x1, x2 = x
+                else:
+                    x1, x2 = x[0], x[1]
+                # 将通道拼接
+                x = torch.cat((x1, x2), dim=1)
+            
+            B, Cin, H, W = x.shape
+
+            # 2.自适应通道投影
+            if self.q_proj is None:
+                self.q_proj = nn.Conv2d(Cin, self.c2, 1, bias=False).to(x.device)
+                self.k_proj = nn.Conv2d(Cin, self.c2, 1, bias=False).to(x.device)
+                self.v_proj = nn.Conv2d(Cin, self.c2, 1, bias=False).to(x.device)
+                self.gate = nn.Sequential(
+                    nn.AdaptiveAvgPool2d(1),
+                    nn.Conv2d(self.c2, self.c2 // 4, 1),
+                    nn.ReLU(inplace=True),
+                    nn.Conv2d(self.c2 // 4, self.c2, 1),
+                    nn.Sigmoid()
+                ).to(x.device)
+                # 残差通道匹配
+                self.res_proj = nn.Conv2d(Cin, self.c2, 1, bias=False).to(x.device)
+
+            # # 3️ 自注意力计算
+            q = self.q_proj(x).reshape(B, self.c2, -1).permute(0, 2, 1)
+            k = self.k_proj(x).reshape(B, self.c2, -1).permute(0, 2, 1)
+            v = self.v_proj(x).reshape(B, self.c2, -1).permute(0, 2, 1)
+
+            attn = torch.bmm(q, k.transpose(1, 2)) / (self.c2 ** 0.5)
+            attn = F.softmax(attn, dim=-1)
+            out = torch.bmm(attn, v).permute(0, 2, 1).reshape(B, self.c2, H, W)
+
+            # 4 输出与残差融合
+            out = self.attn_out(out)
+            out = self.norm(out)
+            out = self.act(out)
+            g = self.gate(out)
+            res = self.res_proj(x)
+            out = res + g * out
+            return out
+
 
 # -----------------------------
 # CVFI: Cross-View Feature Interaction (高层一致性模块)
@@ -15292,18 +15296,17 @@ class CVFI(nn.Module):
     - 输入: feat (B, C, H, W)
     - 输出: feat (B, C, H, W)
     """
-    def __init__(self, channels: int):
+    def __init__(self, c1, c2):
         super().__init__()
-        self.reduce = nn.Conv2d(channels, channels, 1, bias=False)
-        self.cbam = CBAM(channels, reduction=16)
-        self.se = SEBlock(channels, r=16)
-        # small MLP to learn residual scaling
+        self.reduce = nn.Conv2d(c1, c2, 1, bias=False)
+        self.cbam = CBAM(c2, reduction=16)
+        self.se = SEBlock(c2, r=16)
         self.mlp = nn.Sequential(
             nn.AdaptiveAvgPool2d(1),
             nn.Flatten(),
-            nn.Linear(channels, channels//4),
+            nn.Linear(c2, c2 // 4),
             nn.ReLU(inplace=True),
-            nn.Linear(channels//4, channels),
+            nn.Linear(c2 // 4, c2),
             nn.Sigmoid()
         )
 
