@@ -94,7 +94,7 @@ __all__ = ['DyHeadBlock', 'DyHeadBlockWithDCNV3', 'Fusion', 'C3k2_Faster', 'C3k2
            'A2C2f_EDFFN', 'C3k2_EBlock', 'C3k2_DBlock', 'C3k2_FDConv', 'C3k2_MambaOut_FDConv', 'C3k2_PFDConv', 'C3k2_PFDConv', 'C3k2_FasterFD', 'C3k2_DSAN', 'C3k2_MambaOut_DSA', 'C3k2_DSA', 'C3k2_DSAN_EDFFN', 'C3k2_RMB', 'SNI', 'GSConvE', 'C3k2_SFSConv', 'C3k2_MambaOut_SFSC',
            'C3k2_MambaOut_SFSC', 'C3k2_PSFSConv', 'C3k2_FasterSFSC', 'FCM', 'FCM_1', 'FCM_2', 'FCM_3', 'Pzconv', 'C3k2_GroupMamba', 'C3k2_GroupMambaBlock', 'C3k2_MambaVision', 'C3k2_wConv', 'wConv2d', 'PST', 'C3k2_FourierConv', 'FourierConv', 'C3k2_GLVSS', 'C3k2_ESC', 'C3k2_MBRConv5',
            'C3k2_MBRConv3', 'C3k2_VSSD', 'C3k2_TVIM', 'DPCF', 'C3k2_CSI',
-           'MVAF','LCFM','CVFI' # multi-view
+           'MVAF','HAFB' # multi-view
            ]
 
 def autopad(k, p=None, d=1):  # kernel, padding, dilation
@@ -12531,40 +12531,6 @@ class A2C2f_DFFN(A2C2f):
 
 ######################################## A2C2f-DFFN end ########################################
 
-######################################## Hierarchical Attention Fusion Block start ########################################
-
-class HAFB(nn.Module):
-    # Hierarchical Attention Fusion Block
-    def __init__(self, inc, ouc, group=False):
-        super(HAFB, self).__init__()
-        ch_1, ch_2 = inc
-        hidc = ouc // 2
-
-        self.lgb1_local = LocalGlobalAttention(hidc, 2)
-        self.lgb1_global = LocalGlobalAttention(hidc, 4)
-        self.lgb2_local = LocalGlobalAttention(hidc, 2)
-        self.lgb2_global = LocalGlobalAttention(hidc, 4)
-
-        self.W_x1 = Conv(ch_1, hidc, 1, act=False)
-        self.W_x2 = Conv(ch_2, hidc, 1, act=False)
-        self.W = Conv(hidc, ouc, 3, g=4)
-
-        self.conv_squeeze = Conv(ouc * 3, ouc, 1)
-        self.rep_conv = RepConv(ouc, ouc, 3, g=(16 if group else 1))
-        self.conv_final = Conv(ouc, ouc, 1)
-
-    def forward(self, inputs):
-        x1, x2 = inputs
-        W_x1 = self.W_x1(x1)
-        W_x2 = self.W_x2(x2)
-        bp = self.W(W_x1 + W_x2)
-
-        x1 = torch.cat([self.lgb1_local(W_x1), self.lgb1_global(W_x1)], dim=1)
-        x2 = torch.cat([self.lgb2_local(W_x2), self.lgb2_global(W_x2)], dim=1)
-
-        return self.conv_final(self.rep_conv(self.conv_squeeze(torch.cat([x1, x2, bp], 1))))
-
-######################################## Hierarchical Attention Fusion Block end ########################################
 
 ######################################## A2C2f-FRFN start ########################################
 
@@ -15122,64 +15088,66 @@ class C3k2_CSI(C3k2):
         self.m = nn.ModuleList(C3k_CSI(self.c, self.c, 2, shortcut, g) if c3k else CSI(self.c) for _ in range(n))
 
 ######################################## INFFUS2025 SAMamba end ########################################
-        
-######################################## multi-view start######################################## 
 
-# -----------------------------
-# Auxiliary blocks: SE, CBAM
-# -----------------------------
-class SEBlock(nn.Module):
-    def __init__(self, c1, r=16):
-        super().__init__()
-        self.avgpool = nn.AdaptiveAvgPool2d(1)
-        self.fc = nn.Sequential(
-            nn.Linear(c1, c1 // r, bias=False),
-            nn.ReLU(inplace=True),
-            nn.Linear(c1 // r, c1, bias=False),
-            nn.Sigmoid()
-        )
+######################################## Hierarchical Attention Fusion Block start ########################################
 
-    def forward(self, x):
-        b, c, _, _ = x.shape
-        y = self.avgpool(x).view(b, c)
-        y = self.fc(y).view(b, c, 1, 1)
-        return x * y
+class HAFB(nn.Module):
+    # Hierarchical Attention Fusion Block
+    def __init__(self, inc, ouc, group=False):
+        super(HAFB, self).__init__()
+        ch_1, ch_2 = inc
+        hidc = ouc // 2
+
+        self.lgb1_local = LocalGlobalAttention(hidc, 2)
+        self.lgb1_global = LocalGlobalAttention(hidc, 4)
+        self.lgb2_local = LocalGlobalAttention(hidc, 2)
+        self.lgb2_global = LocalGlobalAttention(hidc, 4)
+
+        self.W_x1 = Conv(ch_1, hidc, 1, act=False)
+        self.W_x2 = Conv(ch_2, hidc, 1, act=False)
+        self.W = Conv(hidc, ouc, 3, g=4)
+
+        self.conv_squeeze = Conv(ouc * 3, ouc, 1)
+        self.rep_conv = RepConv(ouc, ouc, 3, g=(16 if group else 1))
+        self.conv_final = Conv(ouc, ouc, 1)
+
+    def forward(self, inputs):
+        x1, x2 = inputs
+        W_x1 = self.W_x1(x1)
+        W_x2 = self.W_x2(x2)
+        bp = self.W(W_x1 + W_x2)
+
+        x1 = torch.cat([self.lgb1_local(W_x1), self.lgb1_global(W_x1)], dim=1)
+        x2 = torch.cat([self.lgb2_local(W_x2), self.lgb2_global(W_x2)], dim=1)
+
+        return self.conv_final(self.rep_conv(self.conv_squeeze(torch.cat([x1, x2, bp], 1))))
+
+######################################## Hierarchical Attention Fusion Block end ########################################
 
 
-class CBAM(nn.Module):
-    def __init__(self, c1, reduction=16, kernel=7):
-        super().__init__()
-        self.channel_att = nn.Sequential(
-            nn.AdaptiveAvgPool2d(1),
-            nn.Conv2d(c1, c1 // reduction, 1, bias=True),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(c1 // reduction, c1, 1, bias=True),
-            nn.Sigmoid()
-        )
-        self.spatial_att = nn.Sequential(
-            nn.Conv2d(2, 1, kernel_size=kernel, stride=1, padding=kernel//2, bias=False),
-            nn.Sigmoid()
-        )
-
-    def forward(self, x):
-        # channel
-        avg = torch.mean(x, dim=(2,3), keepdim=True)
-        ch = self.channel_att(avg)
-        x = x * ch
-        # spatial
-        avg_pool = torch.mean(x, dim=1, keepdim=True)
-        max_pool, _ = torch.max(x, dim=1, keepdim=True)
-        cat = torch.cat([avg_pool, max_pool], dim=1)
-        sp = self.spatial_att(cat)
-        x = x * sp
-        return x
+######################################## Multi-View Adaptive Fusion multi-view start######################################## 
 
 # -----------------------------
 # MVAF: 高层多视角自适应融合模块 (替换SPPF)
 # -----------------------------
+
+class SEBlock(nn.Module): 
+    def __init__(self, c1, r=16): 
+        super().__init__() 
+        self.avgpool = nn.AdaptiveAvgPool2d(1) 
+        self.fc = nn.Sequential( 
+            nn.Linear(c1, c1 // r, bias=False), 
+            nn.ReLU(inplace=True), 
+            nn.Linear(c1 // r, c1, bias=False), 
+            nn.Sigmoid() ) 
+    def forward(self, x): 
+        b, c, _, _ = x.shape 
+        y = self.avgpool(x).view(b, c) 
+        y = self.fc(y).view(b, c, 1, 1) 
+        return x * y
+        
 class MVAF(nn.Module):
     """
-    Multi-View Adaptive Fusion (MVAF)
     - 作为高层语义融合模块，替换SPPF位置。
     - 输入: feat (B, C, H, W)
     - 通过多尺度 conv + SE + 可学习通道权重实现自适应融合。
@@ -15220,103 +15188,5 @@ class MVAF(nn.Module):
 
         return fused + self.res_conv(x)
 
-# -----------------------------
-# LCFM: 局部互补性融合模块（轻量化自注意力）
-# -----------------------------
-class LCFM(nn.Module):
-    """
-    Local Complementarity Fusion Module
-    - 用于代替 Concat 后的直接 conv，用于两个或多个特征图之间的交互。
-    - 支持两个张量输入：x (target resolution), y (skip/resolution from backbone/head)
-    - 内部实现了轻量化的跨特征自注意力（multi-head attention 的简化版）。
-    """
-    def __init__(self, c1, c2):
-        super().__init__()
-        self.c2 = c2
-        self.norm = nn.BatchNorm2d(c2)
-        self.act = nn.SiLU()
-        self.attn_out = nn.Conv2d(c2, c2, 1, bias=False)
-        # 懒加载参数，在 forward 初始化时定义卷积层
-        self.q_proj = None
-        self.res_proj = None
-
-    def forward(self, x):
-            # 1.若输入为列表
-            if isinstance(x, (list, tuple)):
-                if len(x) == 2:
-                    x1, x2 = x
-                else:
-                    x1, x2 = x[0], x[1]
-                # 将通道拼接
-                x = torch.cat((x1, x2), dim=1)
-            
-            B, Cin, H, W = x.shape
-
-            # 2.自适应通道投影
-            if self.q_proj is None:
-                self.q_proj = nn.Conv2d(Cin, self.c2, 1, bias=False).to(x.device)
-                self.k_proj = nn.Conv2d(Cin, self.c2, 1, bias=False).to(x.device)
-                self.v_proj = nn.Conv2d(Cin, self.c2, 1, bias=False).to(x.device)
-                self.gate = nn.Sequential(
-                    nn.AdaptiveAvgPool2d(1),
-                    nn.Conv2d(self.c2, self.c2 // 4, 1),
-                    nn.ReLU(inplace=True),
-                    nn.Conv2d(self.c2 // 4, self.c2, 1),
-                    nn.Sigmoid()
-                ).to(x.device)
-                # 残差通道匹配
-                self.res_proj = nn.Conv2d(Cin, self.c2, 1, bias=False).to(x.device)
-
-            # # 3️ 自注意力计算
-            q = self.q_proj(x).reshape(B, self.c2, -1).permute(0, 2, 1)
-            k = self.k_proj(x).reshape(B, self.c2, -1).permute(0, 2, 1)
-            v = self.v_proj(x).reshape(B, self.c2, -1).permute(0, 2, 1)
-
-            attn = torch.bmm(q, k.transpose(1, 2)) / (self.c2 ** 0.5)
-            attn = F.softmax(attn, dim=-1)
-            out = torch.bmm(attn, v).permute(0, 2, 1).reshape(B, self.c2, H, W)
-
-            # 4 输出与残差融合
-            out = self.attn_out(out)
-            out = self.norm(out)
-            out = self.act(out)
-            g = self.gate(out)
-            res = self.res_proj(x)
-            out = res + g * out
-            return out
-
-
-# -----------------------------
-# CVFI: Cross-View Feature Interaction (高层一致性模块)
-# -----------------------------
-class CVFI(nn.Module):
-    """
-    Cross-View Feature Interaction
-    - 采用 CBAM + 通道自适应融合，用于高层语义的一致性增强
-    - 输入: feat (B, C, H, W)
-    - 输出: feat (B, C, H, W)
-    """
-    def __init__(self, c1, c2):
-        super().__init__()
-        self.reduce = nn.Conv2d(c1, c2, 1, bias=False)
-        self.cbam = CBAM(c2, reduction=16)
-        self.se = SEBlock(c2, r=16)
-        self.mlp = nn.Sequential(
-            nn.AdaptiveAvgPool2d(1),
-            nn.Flatten(),
-            nn.Linear(c2, c2 // 4),
-            nn.ReLU(inplace=True),
-            nn.Linear(c2 // 4, c2),
-            nn.Sigmoid()
-        )
-
-    def forward(self, x):
-        r = self.reduce(x)
-        r = self.cbam(r)
-        r = self.se(r)
-        scale = self.mlp(x).view(x.size(0), x.size(1), 1, 1)
-        out = x + r * scale
-        return out
-
-######################################## multi-view end ######################################## 
+######################################## Multi-View Adaptive Fusion ######################################## 
 
