@@ -6,7 +6,7 @@ from ultralytics import YOLO
 ## test simgle
 if __name__ == '__main__':
     # 直接指定你要测试的YAML文件
-    yaml_file = 'yolo11-mv.yaml'  # 替换为你要测试的具体文件名
+    yaml_file = 'yolo11-MVAFHAFB.yaml'  # 替换为你要测试的具体文件名
     yaml_path = f'ultralytics/cfg/models/11/{yaml_file}'
     
     try:
