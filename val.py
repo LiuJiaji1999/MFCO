@@ -12,7 +12,7 @@ def get_weight_size(path):
     return f'{stats.st_size / 1024 / 1024:.1f}'
 
 if __name__ == '__main__':
-    model_path = 'runs/train/exp30/weights/best.pt'
+    model_path = 'runs/train/exp27/weights/best.pt' # 测试结果都为0的话，用fp32的
     model = YOLO(model_path) # 选择训练好的权重路径
     result = model.val(data='/home/lenovo/data/liujiaji/ultralytics-yolo11-main/dataset/powerdata.yaml',
                         split='test', # split可以选择train、val、test 根据自己的数据集情况来选择.
@@ -24,7 +24,7 @@ if __name__ == '__main__':
                         project='runs/test',
                         name='mexp',
                         )
-    
+    # print(result.results_dict)  
     # if model.task == 'detect': 
     #     length = result.box.p.size
     #     model_names = list(result.names.values())
