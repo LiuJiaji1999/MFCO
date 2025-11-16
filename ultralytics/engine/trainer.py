@@ -413,10 +413,10 @@ class BaseTrainer:
                     batch_v = generate_multiview_batch(batch,visualize=False)
                     
                     # 仅 MV,记得去 ultralytics/models/yolo/detect/train.py 改为原3loss
-                    # self.loss, self.loss_items = self.model(batch_v)
+                    self.loss, self.loss_items = self.model(batch_v)
 
                     ### MV+GL
-                    
+                    '''
                     global_loss = 0.0
                     local_loss = 0.0
                     B = batch_v['img'].shape[0] // 6
@@ -485,7 +485,7 @@ class BaseTrainer:
                         global_loss.detach().unsqueeze(0),
                         local_loss.detach().unsqueeze(0)
                     ])
-                   
+                    '''
                     if RANK != -1:
                         self.loss *= world_size
                     self.tloss = (
