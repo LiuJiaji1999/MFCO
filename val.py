@@ -18,7 +18,7 @@ if __name__ == '__main__':
                         split='test', # split可以选择train、val、test 根据自己的数据集情况来选择.
                         imgsz=640,
                         batch=4, # 该值对结果的影响不大
-                        iou=0.7,
+                        # iou=0.7,
                         # rect=False,
                         # save_json=True, # if you need to cal coco metrice
                         project='runs/test',
