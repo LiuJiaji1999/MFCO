@@ -3,6 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from functools import partial
 from einops import rearrange
+from typing import Tuple
+
 from .prepbn import RepBN, LinearNorm
 from .attention import *
 from .ast import AdaptiveSparseSA
