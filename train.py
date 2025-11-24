@@ -8,7 +8,7 @@ if __name__ == '__main__':
     model = YOLO('ultralytics/cfg/models/11/yolo11m-CSP-PTB-FPSC.yaml') # YOLO11
     # model = YOLO('/home/lenovo/data/liujiaji/ultralytics-yolo11-main/runs/train/exp4/weights/last.pt') # YOLO11
     model.load('yolo11m.pt') # loading pretrain weights
-    model.train(data='/home/lenovo/data/liujiaji/ultralytics-yolo11-main/dataset/VsiDrone.yaml',
+    model.train(data='/home/lenovo/data/liujiaji/ultralytics-yolo11-main/dataset/VisDrone.yaml',
                 cache=False,
                 imgsz=640, #640
                 epochs=100,
