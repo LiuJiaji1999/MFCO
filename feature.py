@@ -134,7 +134,7 @@ def tsne_compare(features_dict, title, ax, pca_dim=100): # save_path,
 # 使用示例
 # -------------------
 if __name__ == "__main__":
-    img_dir = "/home/lenovo/data/liujiaji/yolov8/powerdata/images/test/"
+    img_dir = "/home/lenovo/data/liujiaji/yolov8/powerdata/images/val/"
     # img_dir = "/home/lenovo/data/liujiaji/powerGit/yolov8/testImg"
     local_layers = [2, 4, 6, 8, 9]
     global_layers = [10]
@@ -169,7 +169,7 @@ if __name__ == "__main__":
     axes[0].legend()
     axes[1].legend()
 
-    save_path = "/home/lenovo/data/liujiaji/powerGit/mvod/features/tsne_local_global.png"
+    save_path = "/home/lenovo/data/liujiaji/powerGit/mvod/features/tsne_local_global-2.png"
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     plt.savefig(save_path, dpi=300,bbox_inches="tight")
     plt.close()
