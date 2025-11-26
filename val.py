@@ -12,13 +12,13 @@ def get_weight_size(path):
     return f'{stats.st_size / 1024 / 1024:.1f}'
 
 if __name__ == '__main__':
-    model_path = 'runs/train/exp37/weights/best.pt' # 测试结果都为0的话，用fp32的
+    model_path = 'runs/train/exp38/weights/best.pt' # 测试结果都为0的话，用fp32的
     model = YOLO(model_path) # 选择训练好的权重路径
-    result = model.val(data='/home/lenovo/data/liujiaji/ultralytics-yolo11-main/dataset/powerdata.yaml',
+    result = model.val(data='/home/lenovo/data/liujiaji/ultralytics-yolo11-main/dataset/VisDrone.yaml',
                         split='test', # split可以选择train、val、test 根据自己的数据集情况来选择.
                         imgsz=800,
                         batch=4, # 该值对结果的影响不大
-                        iou=0.5,
+                        # iou=0.5,
                         # rect=False,
                         # save_json=True, # if you need to cal coco metrice
                         project='runs/test',
