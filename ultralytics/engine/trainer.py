@@ -541,7 +541,7 @@ class BaseTrainer:
                         self.metrics, self.fitness = self.validate()
                     except Exception as e:
                         print(e)
-                        raise Exception('这阶段报错一般是没按配置文件.md要求修改，先看配置文件.md看看有没有要求修改什么，没的话按照配置文件.md最下方第五点修改')
+                        raise Exception('报错没按配置文件.md要求修改')
                 self.save_metrics(metrics={**self.label_loss_items(self.tloss), **self.metrics, **self.lr})
                 self.stop |= self.stopper(epoch + 1, self.fitness) or final_epoch
                 if self.args.time:
