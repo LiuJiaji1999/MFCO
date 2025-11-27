@@ -20,7 +20,11 @@ plt.rcParams.update({
 
 exp_labels = {
     'exp2': 'YOLO11',
-    'exp4': 'Ours',
+    'exp3': 'YOLO11_MVI',
+    # 'exp4': 'Ours',
+    'exp34': 'YOLO11_MVI_CSPTBFPSC',
+    'exp35': 'Ours',
+
 }
 
 palette = sns.color_palette("tab10", len(exp_labels))
@@ -84,5 +88,5 @@ handles, labels = loss_axes[0].get_legend_handles_labels()
 fig.legend(handles, labels, loc="lower center", ncol=3, frameon=False, fontsize=14)
 
 plt.tight_layout(rect=[0, 0.05, 1, 0.95])
-plt.savefig("/home/lenovo/data/liujiaji/powerGit/mvod/image/overall_curve.png", dpi=300, bbox_inches="tight")
-print(f"保存成功: /home/lenovo/data/liujiaji/powerGit/mvod/image/overall_curve.png")
+plt.savefig("/home/lenovo/data/liujiaji/powerGit/mvod/image/overall_curve+++.png", dpi=300, bbox_inches="tight")
+print(f"保存成功: /home/lenovo/data/liujiaji/powerGit/mvod/image/overall_curve+++.png")
