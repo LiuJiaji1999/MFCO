@@ -5,10 +5,10 @@ from ultralytics import YOLO
 # yaml是做轻量化的话可以用get_all_yaml_param_and_flops.py脚本
 
 if __name__ == '__main__':
-    model = YOLO('ultralytics/cfg/models/11/yolo11m-CSP-PTB-FPSC.yaml') # YOLO11
+    model = YOLO('ultralytics/cfg/models/11/yolo11m.yaml') # YOLO11
     # model = YOLO('/home/lenovo/data/liujiaji/ultralytics-yolo11-main/runs/train/exp4/weights/last.pt') # YOLO11
     model.load('yolo11m.pt') # loading pretrain weights
-    model.train(data='/home/lenovo/data/liujiaji/ultralytics-yolo11-main/dataset/publicallpower.yaml', #powerdata  publicallpower VisDrone
+    model.train(data='/home/lenovo/data/liujiaji/ultralytics-yolo11-main/dataset/VisDrone.yaml', #powerdata  publicallpower VisDrone
                 cache=False,
                 imgsz=640, #640
                 epochs=100,
