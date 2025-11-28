@@ -486,13 +486,13 @@ class BaseTrainer:
                         global_loss.detach().unsqueeze(0),
                         local_loss.detach().unsqueeze(0)
                     ])
-                    
+                    '''
                     if RANK != -1:
                         self.loss *= world_size
                     self.tloss = (
                         (self.tloss * i + self.loss_items) / (i + 1) if self.tloss is not None else self.loss_items
                     )
-                    '''
+                   
                 # Backward
                 self.scaler.scale(self.loss).backward()
 
