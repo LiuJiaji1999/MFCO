@@ -149,10 +149,10 @@ def generate_multiview_batch(batch, visualize=False, save_dir="/home/lenovo/data
      # 添加首次调用标志
     if not hasattr(generate_multiview_batch, "_first_call"):
         print("\n")
-        print("🎯 首次调用 generate_multiview_batch 函数")
+        print("***首次调用 generate_multiview_batch 函数")
         for i in range(len(views)):
             aug_views.append(views[i][0])
-        print('🥐aug view have:',aug_views)
+        print('***aug view have:',aug_views)
         generate_multiview_batch._first_call = True
 
     # 拼接
