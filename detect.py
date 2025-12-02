@@ -4,13 +4,13 @@ from ultralytics import YOLO
 
 ### old
 if __name__ == '__main__':
-    model = YOLO('runs/train/exp3/weights/best.pt') # select your model.pt path
+    model = YOLO('runs/train/exp35/weights/best.pt') # select your model.pt path
     model.predict(
                   # source='/home/lenovo/data/liujiaji/Datasets-Power/privatepower/pin/rust/img',
                   source='/home/lenovo/data/liujiaji/powerGit/yolov8/testImg',
                   imgsz=640,
                   project='runs/detect',
-                  name='11mvb-prp',
+                  name='ours',
                   save=True,
                   conf=0.3,
                   # iou=0.7,
