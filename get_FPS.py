@@ -36,7 +36,7 @@ def get_weight_size(path):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--weights', type=str, default='/home/lenovo/data/liujiaji/ultralytics-yolo11-main/runs/train/exp4/weights/best.pt', help='trained weights path')
-    parser.add_argument('--batch', type=int, default=16, help='total batch size for all GPUs')
+    parser.add_argument('--batch', type=int, default=1, help='total batch size for all GPUs')
     parser.add_argument('--imgs', nargs='+', type=int, default=[640, 640], help='[height, width] image sizes')
     parser.add_argument('--device', default='', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
     parser.add_argument('--warmup', default=200, type=int, help='warmup time')
