@@ -141,9 +141,11 @@ if __name__ == "__main__":
 
     # 两个不同权重
     weight_paths = {
-        "YOLO11": "runs/train/exp2/weights/best.pt",
-        "MV-YOLO11": "runs/train/exp3/weights/best.pt",
-        "Ours": "runs/train/exp4/weights/best.pt"
+        # "YOLO11": "runs/train/exp2/weights/best.pt",
+        "YOLO11_MVI": "runs/train/exp3/weights/best.pt",
+        # "MFCO": "runs/train/exp4/weights/best.pt"
+        "Ours": "runs/train/exp35/weights/best.pt"
+        
     }
 
     features_local = {}
