@@ -21,8 +21,8 @@ plt.rcParams.update({
 exp_labels = {
     'exp2': 'YOLO11',
     'exp3': 'YOLO11_MVI',
-    # 'exp4': 'Ours',
-    'exp34': 'YOLO11_MVI_CSPTBFPSC',
+    'exp4': 'YOLO11_MVI_GL',
+    # 'exp34': 'YOLO11_MVI_CSPTB_FPSC',
     'exp35': 'Ours',
 
 }
@@ -40,16 +40,18 @@ loss_keys = {
     'val/dfl_loss': 'Val DFL Loss',
     'val/cls_loss': 'Val Cls Loss',
 }
-
-metric_keys = {
-    'metrics/precision(B)': 'Precision',
-    'metrics/recall(B)': 'Recall',
-    'metrics/mAP50(B)': 'mAP@0.5',
-    'metrics/mAP50-95(B)': 'mAP@0.5:0.95'
-}
-
 # ---------------- 画布：2行6列 ----------------
-fig, axes = plt.subplots(2, 6, figsize=(28, 10))
+fig, axes = plt.subplots(2, 4, figsize=(28, 10))
+
+# metric_keys = {
+#     'metrics/precision(B)': 'Precision',
+#     'metrics/recall(B)': 'Recall',
+#     'metrics/mAP50(B)': 'mAP@0.5',
+#     'metrics/mAP50-95(B)': 'mAP@0.5:0.95'
+# }
+
+# # ---------------- 画布：2行6列 ----------------
+# fig, axes = plt.subplots(2, 6, figsize=(28, 10))
 
 # ---- 前4列（8个子图）画 Loss ----
 loss_axes = axes[:, :4].flatten()  # 2行4列=8个
@@ -67,26 +69,26 @@ for ax, (key, title) in zip(loss_axes, loss_keys.items()):
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
 
-# ---- 后2列（4个子图）画 Metrics ----
-metric_axes = axes[:, 4:].flatten()  # 2行2列=4个    
-for ax, (key, title) in zip(metric_axes, metric_keys.items()):
-    for (exp, label), color in zip(exp_labels.items(), palette):
-        data = pd.read_csv(f"runs/train/{exp}/results.csv")
-        if key not in data.columns:
-            continue
-        series = data[key].astype(np.float32).replace(np.inf, np.nan)
-        series = series.fillna(series.interpolate())
-        smooth = series.rolling(window=3, min_periods=1).mean()
-        ax.plot(smooth, label=label, color=color)
-    ax.set_xlabel("Epoch")
-    ax.set_ylabel(title)
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
+# # ---- 后2列（4个子图）画 Metrics ----
+# metric_axes = axes[:, 4:].flatten()  # 2行2列=4个    
+# for ax, (key, title) in zip(metric_axes, metric_keys.items()):
+#     for (exp, label), color in zip(exp_labels.items(), palette):
+#         data = pd.read_csv(f"runs/train/{exp}/results.csv")
+#         if key not in data.columns:
+#             continue
+#         series = data[key].astype(np.float32).replace(np.inf, np.nan)
+#         series = series.fillna(series.interpolate())
+#         smooth = series.rolling(window=3, min_periods=1).mean()
+#         ax.plot(smooth, label=label, color=color)
+#     ax.set_xlabel("Epoch")
+#     ax.set_ylabel(title)
+#     ax.spines["top"].set_visible(False)
+#     ax.spines["right"].set_visible(False)
 
 # ---- 统一图例 ----
 handles, labels = loss_axes[0].get_legend_handles_labels()
-fig.legend(handles, labels, loc="lower center", ncol=3, frameon=False, fontsize=14)
+fig.legend(handles, labels, loc="lower center", ncol=4, frameon=False, fontsize=14)
 
 plt.tight_layout(rect=[0, 0.05, 1, 0.95])
-plt.savefig("/home/lenovo/data/liujiaji/powerGit/mvod/image/overall_curve+++.png", dpi=300, bbox_inches="tight")
-print(f"保存成功: /home/lenovo/data/liujiaji/powerGit/mvod/image/overall_curve+++.png")
+plt.savefig("/home/lenovo/data/liujiaji/powerGit/mvod/image/compare-loss.png", dpi=300, bbox_inches="tight")
+print(f"保存成功: /home/lenovo/data/liujiaji/powerGit/mvod/image/compare-loss.png")

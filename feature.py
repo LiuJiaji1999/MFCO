@@ -6,35 +6,61 @@ import numpy as np
 import os
 import torch
 import matplotlib.pyplot as plt
-
+from tqdm import tqdm
 # -------------------
 # Step1: 提取特征
 # -------------------
-def extract_features(weight_path, img_dir, local_layers, global_layers):
+def extract_features(weight_path, img_dir, layers):
     """提取局部和全局特征"""
     model = YOLO(weight_path)
+    preds = model.predict(
+            source=img_dir,
+            imgsz=640,
+            conf=0.3,
+            embed=layers,
+            save=False,
+            verbose=False
+        )
+    return preds
 
-    # 局部特征
-    fea_local = model.predict(
-        source=img_dir,
-        imgsz=640,
-        conf=0.3,
-        embed=local_layers,
-        save=False,
-        verbose=False
-    )
+    # all_features = []
+    # for img in tqdm(img_dir, desc=f"Extracting features from {weight_path}"):
+    #     preds = model.predict(
+    #         source=img,
+    #         imgsz=640,
+    #         conf=0.3,
+    #         embed=layers,
+    #         save=False,
+    #         verbose=False
+    #     )
+    # all_features.append(preds)
+    
+        # # preds 是 list, 仅包含单张图的结果
+        # view_features = []
 
-    # 全局特征
-    fea_global = model.predict(
-        source=img_dir,
-        imgsz=640,
-        conf=0.3,
-        embed=global_layers,
-        save=False,
-        verbose=False
-    )
+        # for out in preds:
+        #     # out['embed'] 是该图像多视角的特征列表
+        #     embeds = out['embed']
+        #     for f in embeds:
+        #         f = f.detach().cpu().reshape(-1)  # flatten
+        #         view_features.append(f)
 
-    return fea_local, fea_global
+        # if len(view_features) > 0:
+        #     all_features.append(torch.stack(view_features))  # (num_views, D)
+
+    # return torch.Tensor(all_features)
+    
+        # # 全局特征
+        # fea_global = model.predict(
+        #     source=img_dir,
+        #     imgsz=640,
+        #     conf=0.3,
+        #     embed=global_layers,
+        #     save=False,
+        #     verbose=False
+        # )
+
+    # return fea_local, fea_global
 
 def tsne_compare(features_dict, title, ax, pca_dim=100): # save_path, 
     """
@@ -136,6 +162,8 @@ def tsne_compare(features_dict, title, ax, pca_dim=100): # save_path,
 if __name__ == "__main__":
     img_dir = "/home/lenovo/data/liujiaji/yolov8/powerdata/images/val/"
     # img_dir = "/home/lenovo/data/liujiaji/powerGit/yolov8/testImg"
+    all_imgs = sorted([img_dir + f for f in os.listdir(img_dir) if f.endswith(".jpg")])[:100]
+
     local_layers = [2, 4, 6, 8, 9]
     global_layers = [10]
 
@@ -145,16 +173,29 @@ if __name__ == "__main__":
         "YOLO11_MVI": "runs/train/exp3/weights/best.pt",
         # "MFCO": "runs/train/exp4/weights/best.pt"
         "Ours": "runs/train/exp35/weights/best.pt"
-        
     }
-
+    '''
+    CUDA out of memory.???
+    '''
     features_local = {}
     features_global = {}
 
     for name, w in weight_paths.items():
-        fea_local, fea_global = extract_features(w, img_dir, local_layers, global_layers)
+        fea_local = extract_features(w, all_imgs, local_layers)
         features_local[name] = fea_local
+        fea_global = extract_features(w, all_imgs, global_layers)
         features_global[name] = fea_global
+
+    # for name, w in weight_paths.items():
+    #     print(f"\n>>> Loading model: {name}")
+    #     # model = YOLO(w)
+
+    #     print(f"[{name}] Extracting LOCAL features...")
+    #     features_local[name] = extract_features(w, all_imgs, local_layers)
+
+    #     print(f"[{name}] Extracting GLOBAL features...")
+    #     features_global[name] = extract_features(w, all_imgs, global_layers)
+
 
 
     # # # 局部特征对比
