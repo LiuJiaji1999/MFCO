@@ -416,7 +416,7 @@ class BaseTrainer:
                     self.loss, self.loss_items = self.model(batch_v)
 
                     ### MV+GL
-                    '''
+                   
 
                     global_loss = 0.0
                     local_loss = 0.0
@@ -486,7 +486,7 @@ class BaseTrainer:
                         global_loss.detach().unsqueeze(0),
                         local_loss.detach().unsqueeze(0)
                     ])
-                    '''
+                   
                     if RANK != -1:
                         self.loss *= world_size
                     self.tloss = (
