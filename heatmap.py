@@ -342,11 +342,11 @@ class yolo_heatmap:
             self.process(img_path, f'{save_path}/result.png')
         
 def get_params():
-    params = {
-        'weight': 'runs/train/exp4/weights/best.pt', # 现在只需要指定权重即可,不需要指定cfg
+    params = { #exp3, [exp17, exp28], exp35
+        'weight': 'runs/train/exp35/weights/best.pt', # 现在只需要指定权重即可,不需要指定cfg
         'device': 'cuda:0',
         'method': 'GradCAMPlusPlus', # GradCAMPlusPlus, GradCAM, XGradCAM, EigenCAM, HiResCAM, LayerCAM, RandomCAM, EigenGradCAM, KPCA_CAM
-        'layer': [10, 12, 15, 18, 21, 22],#  [10, 12, 15, 18, 21, 22]
+        'layer': [9],# [2,4,6,8,9] [10, 12, 15, 18, 21, 22]
         'backward_type': 'all', # detect:<class, box, all> segment:<class, box, segment, all> pose:<box, keypoint, all> obb:<box, angle, all> classify:<all>
         'conf_threshold': 0.3, # 0.2
         'ratio': 0.02, # 0.02-0.1
@@ -363,7 +363,9 @@ if __name__ == '__main__':
     model = yolo_heatmap(**get_params())
     # model(r'/home/hjj/Desktop/dataset/dataset_coco/coco/images/val2017/000000361238.jpg', 'result')
     # model(r'/home/lenovo/data/liujiaji/powerGit/mvod/image/detecthm/input', '/home/lenovo/data/liujiaji/powerGit/mvod/image/detecthm/yolov11')
-    model(r'/home/lenovo/data/liujiaji/powerGit/mvod/image/multiview/localhostview', 
-          '/home/lenovo/data/liujiaji/powerGit/mvod/image/multiview/heatmap')
+    # model(r'/home/lenovo/data/liujiaji/powerGit/mvod/image/multiview/localhostview', 
+    #       '/home/lenovo/data/liujiaji/powerGit/mvod/image/multiview/heatmap')
+    model(r'/home/lenovo/data/liujiaji/powerGit/yolov8/testImg',
+          '/home/lenovo/data/liujiaji/powerGit/mvod/glfea/exp35_9')
     # EigenGradCAM HiResCAM LayerCAM  [10, 12, 15, 18, 21, 22]
     # GradCAMPlusPlus 差异性明显 [2,4,6,8,9,10]
