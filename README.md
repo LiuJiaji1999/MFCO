@@ -3,10 +3,19 @@
 
 ## 💡Introduction
 This is our PyTorch implementation of the paper "[`A multi-view feature collaborative optimization method for object detection`].
-
+<!-- ```bash
+Model Version 1
+```
 <div align="center">
     <img src="MFCO.png" width="1000" alt="MFCO">
 </div>
+
+```bash
+Model Version 2
+```
+<div align="center">
+    <img src="MFCO++.png" width="1000" alt="MFCO">
+</div> -->
 
 ## 🚩Dataset
 ```bash
@@ -67,6 +76,13 @@ nohup python feature.py > /home/lenovo/data/liujiaji/powerGit/mvod/log/feature.l
 ```
 </details>
 
+#### 📢Plan
+```bash
+We will modify network to the Camouflaged/Salient Object Detection,enabling fair comparison with other MVOD methods.
+And thanks again to the sprirt of the open-source:https://github.com/stars/LiuJiaji1999/lists/mvod
+✅ MFFN-YOLO：https://github.com/zhanxn666/newtask
+```
+
 #### 📝RT-DETR result
 ```bash
 /rtdetr
@@ -96,11 +112,7 @@ datasets: Private Power Data, Public Power Data, VisDrone2019-DET
 | (384, 384) | 19.3 | 14.9 | 6.0 | 66.4 | 29.7 | 32.0 | 14.6 | 11.2 | 44.6 | 23.9 | 26.3 |
 | (384,384)+ours | 23.5 | 19.2 | 5.3 | 69.6 | 30.1 | 36.4 | 16.0 | 14.4 | 53.0 | 28.3 | 29.6 |
 
-#### 📢Plan
-```bash
-We will modify network to the Camouflaged/Salient Object Detection,enabling fair comparison with other MVOD methods.
-And thanks again to the sprirt of the open-source:https://github.com/stars/LiuJiaji1999/lists/mvod
-```
+
 
 #### 🌟Explanation of the file
 ```bash
