@@ -45,10 +45,13 @@ git clone https://github.com/LiuJiaji1999/MFCO.git
 # the version of ultralytics is '8.3.9'           
 # GPU - 24G NVIDIA GeForce RTX 3090 
 # CPU - 12th Gen Intel(R) Core(TM) i9-12900
-python: 3.8.18
-torch:  1.12.0+cu113
-torchvision: 0.13.0+cu113 
-numpy: 1.22.3
+pip install -r OD-requirements.txt
+attention:
+  - opencv-python==4.9.0.80
+  - opencv-python-headless==4.9.0.80
+  - torch==1.9.0
+  - torchvision==0.13.0+cu113
+  - torchaudio==0.12.0+cu113
 ```
 
 </details>
