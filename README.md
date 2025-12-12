@@ -81,10 +81,12 @@ nohup python feature.py > /home/lenovo/data/liujiaji/powerGit/mvod/log/feature.l
 
 #### 📢Plan
 ```bash
-We will modify network to the Camouflaged/Salient Object Detection,enabling fair comparison with other MVOD methods.
+We will modify network to the enabling fair comparison with other MVOD methods.
+    - ✅ MFFN-YOLO：https://github.com/zhanxn666/newtask (Camouflaged Object Detection)
+    - 
 And thanks again to the sprirt of the open-source:https://github.com/stars/LiuJiaji1999/lists/mvod
-✅ MFFN-YOLO：https://github.com/zhanxn666/newtask
 ```
+
 
 #### 📝RT-DETR result
 ```bash
