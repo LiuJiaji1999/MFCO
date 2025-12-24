@@ -2,9 +2,18 @@
 ## Multi-View Object Detection
 
 ## 💡Introduction
-This is our PyTorch implementation of the paper "[`A multi-view feature collaborative optimization method for object detection`].
+
+This is our submitted paper implemented using PyTorch.
+
 <!-- ```bash
-Model Version 1
+Version1️⃣: 
+    This is our PyTorch implementation of the paper "[`A multi-view feature collaborative optimization method for object detection`].
+Version2️⃣:
+    This is our PyTorch implementation of the paper "[`Multi-view object detection with feature optimization and loss constraint`].
+``` -->
+
+<!-- ```bash
+Model Version 1 
 ```
 <div align="center">
     <img src="MFCO.png" width="1000" alt="MFCO">
