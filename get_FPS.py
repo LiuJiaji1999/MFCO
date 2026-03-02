@@ -35,7 +35,7 @@ def get_weight_size(path):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weights', type=str, default='/home/lenovo/data/liujiaji/ultralytics-yolo11-main/runs/train/exp2/weights/best.pt', help='trained weights path')
+    parser.add_argument('--weights', type=str, default='/home/lenovo/data/liujiaji/ultralytics-yolo11-main/runs/train/exp6/weights/best.pt', help='trained weights path')
     # parser.add_argument('--weights', type=str, default='/home/lenovo/data/liujiaji/mffn-yolo-pr.pt', help='trained weights path')
     
     parser.add_argument('--batch', type=int, default=1, help='total batch size for all GPUs')
