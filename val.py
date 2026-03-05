@@ -12,11 +12,11 @@ def get_weight_size(path):
     return f'{stats.st_size / 1024 / 1024:.1f}'
 
 if __name__ == '__main__': # exp2 exp15 3 [exp17 exp28] exp34  exp4 exp35
-    model_path = 'runs/train/exp36/weights/best.pt' # 测试结果都为0的话，用fp32的
+    model_path = 'runs/train/exp2/weights/best.pt' # 测试结果都为0的话，用fp32的
     model = YOLO(model_path) # 选择训练好的权重路径
     result = model.val(data='/home/lenovo/data/liujiaji/ultralytics-yolo11-main/dataset/powerdata.yaml',
                         split='test', # split可以选择train、val、test 根据自己的数据集情况来选择.
-                        imgsz=800,
+                        imgsz=640,
                         batch=4, # 该值对结果的影响不大
                         # iou=0.5,
                         # rect=False,
