@@ -16,7 +16,7 @@ if __name__ == '__main__':
                   # iou=0.7,
                   # agnostic_nms=True,
                   # embed=[2],
-                  # visualize=True, # visualize model features maps
+                  visualize=True, # visualize model features maps
                   line_width=5, # line width of the bounding boxes
                   # show_conf=False, # do not show prediction confidence
                   # show_labels=False, # do not show prediction labels

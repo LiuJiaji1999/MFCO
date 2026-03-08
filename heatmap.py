@@ -342,11 +342,11 @@ class yolo_heatmap:
             self.process(img_path, f'{save_path}/result.png')
         
 def get_params():
-    params = { #exp3, [exp17, exp28], exp35
-        'weight': 'runs/train/exp35/weights/best.pt', # 现在只需要指定权重即可,不需要指定cfg
+    params = { #exp2, exp3, exp4, [exp17, exp28], exp35
+        'weight': 'runs/train/exp3/weights/best.pt', # 现在只需要指定权重即可,不需要指定cfg
         'device': 'cuda:0',
         'method': 'GradCAMPlusPlus', # GradCAMPlusPlus, GradCAM, XGradCAM, EigenCAM, HiResCAM, LayerCAM, RandomCAM, EigenGradCAM, KPCA_CAM
-        'layer': [9],# [2,4,6,8,9] [10, 12, 15, 18, 21, 22]
+        'layer': [10],# [2,4,6,8,9] [10, 12, 15, 18, 21, 22]
         'backward_type': 'all', # detect:<class, box, all> segment:<class, box, segment, all> pose:<box, keypoint, all> obb:<box, angle, all> classify:<all>
         'conf_threshold': 0.3, # 0.2
         'ratio': 0.02, # 0.02-0.1
@@ -366,6 +366,6 @@ if __name__ == '__main__':
     # model(r'/home/lenovo/data/liujiaji/powerGit/mvod/image/multiview/localhostview', 
     #       '/home/lenovo/data/liujiaji/powerGit/mvod/image/multiview/heatmap')
     model(r'/home/lenovo/data/liujiaji/powerGit/yolov8/testImg',
-          '/home/lenovo/data/liujiaji/powerGit/mvod/glfea/exp35_9')
+          '/home/lenovo/data/liujiaji/powerGit/mvod/glfea/exp4_10')
     # EigenGradCAM HiResCAM LayerCAM  [10, 12, 15, 18, 21, 22]
     # GradCAMPlusPlus 差异性明显 [2,4,6,8,9,10]
