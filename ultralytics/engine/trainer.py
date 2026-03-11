@@ -413,7 +413,7 @@ class BaseTrainer:
                     batch_v = generate_multiview_batch(batch,visualize=False)
                     
                     # 仅 MV,记得去 ultralytics/models/yolo/detect/train.py 改为原3loss
-                    self.loss, self.loss_items = self.model(batch_v)
+                    # self.loss, self.loss_items = self.model(batch_v)
 
                     ### MV+GL
                    
