@@ -416,8 +416,6 @@ class BaseTrainer:
                     # self.loss, self.loss_items = self.model(batch_v)
 
                     ### MV+GL
-                   
-
                     global_loss = 0.0
                     local_loss = 0.0
                     B = batch_v['img'].shape[0] // 6
