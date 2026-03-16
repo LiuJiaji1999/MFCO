@@ -93,13 +93,13 @@ nohup python feature.py > /home/lenovo/data/liujiaji/powerGit/mvod/log/feature.l
 We will modify network to the enabling fair comparison with other MVOD methods.
     - ✅ MFFN-YOLO：https://github.com/zhanxn666/MFFN_YOLO (Camouflaged Object Detection)
     - 
-And thanks again to the sprirt of the open-source:https://github.com/stars/LiuJiaji1999/lists/mvod
-```
+And thanks again to the sprirt of the open-source: https://github.com/stars/LiuJiaji1999/lists/mvod
 
+```
 
 #### 📝RT-DETR result
 ```bash
-/rtdetr
+/rtdetr # update
 model: rtdetr-l.yaml
 datasets: Private Power Data, Public Power Data, VisDrone2019-DET
 (640, 640)+ours: CUDA out of Memory
